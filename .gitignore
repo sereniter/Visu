@@ -17,6 +17,9 @@ remotion-templates/out/
 .remotion/
 artifacts/
 
+# Piper TTS model weights (large binaries; use scripts/download_piper_models.sh)
+models/piper/*.onnx
+
 # Playwright (library / future @playwright/test output)
 test-results/
 playwright-report/

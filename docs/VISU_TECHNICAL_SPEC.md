@@ -59,7 +59,13 @@ Visu/
 │   ├── audit_output_schema_v1.json
 │   ├── upload_metadata_schema_v1.json
 │   └── remotion_props_schema_v1.json        # Remotion composition props (Sprint 12)
-├── scripts/                 # record_chromium_hash.js (Sprint 12 — run from repo root after remotion-templates install)                 # Script templates (script_templates.json; Mode C and ui_flow_scenes; per-flow: contentRoot/topic/scripts/ when present)
+├── models/
+│   └── piper/               # Piper TTS model weights (NOT committed to git; download via scripts/download_piper_models.sh)
+│       ├── models.json      # Model manifest — source URLs, SHA256 hashes, sizes for all voices
+│       ├── MODELS.md        # Setup instructions
+│       ├── {voice}.onnx     # Model weights (local only; ~60–120 MB each)
+│       └── {voice}.onnx.json # Model config (committed)
+├── scripts/                 # record_chromium_hash.js (Sprint 12 — run from repo root after remotion-templates install); download_piper_models.sh (fetch + verify all Piper ONNX weights from models.json); script_templates.json (Mode C and ui_flow_scenes; per-flow: contentRoot/topic/scripts/ when present)
 ├── src/
 │   ├── index.ts             # CLI entry
 │   ├── core/                # Core contracts, config, logging, run metadata, TTS interfaces
@@ -374,6 +380,40 @@ Finally, each mode logs `cli_end`, closes the logger, and sets `process.exitCode
 | Headless | true (browser automation) |
 
 - **Secrets**: All API keys via `.env`; no hardcoded secrets or secret logging (per AGENTS.md).
+
+### 8.1 Piper Model Setup
+
+Piper ONNX model weights are **not committed to the repository** (files are 60–120 MB each; the two English models exceed GitHub's 100 MB per-file limit). They must be downloaded locally before running any TTS or Mode C pipeline.
+
+**Manifest**: `models/piper/models.json` — committed, machine-readable. Contains for each voice: `voice`, `language`, `region`, `gender`, `quality`, `size_bytes`, `sha256`, `onnx_url`, `config_url`. Source: [https://huggingface.co/rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices).
+
+**Download script**: `scripts/download_piper_models.sh`
+
+```bash
+# Download all missing models and verify SHA256
+./scripts/download_piper_models.sh
+
+# Verify already-downloaded files only (no download)
+./scripts/download_piper_models.sh --verify
+
+# Force re-download (e.g. after corruption)
+./scripts/download_piper_models.sh --force
+```
+
+The script reads `models/piper/models.json`, downloads each `.onnx` and `.onnx.json` via `curl`, and verifies the SHA256 of every `.onnx` file against the manifest. Exits with code 1 if any hash mismatches.
+
+**Currently registered voices:**
+
+| Voice | Language | Gender | Quality | Size |
+|-------|----------|--------|---------|------|
+| `en_US-lessac-high` | English | female | high | 109 MB |
+| `en_US-ryan-high` | English | male | high | 115 MB |
+| `hi_IN-priyamvada-medium` | Hindi | female | medium | 61 MB |
+| `hi_IN-rohan-medium` | Hindi | male | medium | 60 MB |
+| `te_IN-maya-medium` | Telugu | female | medium | 60 MB |
+| `te_IN-venkatesh-medium` | Telugu | male | medium | 61 MB |
+
+After downloading, each model's SHA256 must match `config/languages.json → voices.<gender>.modelHash`. The pipeline validates this at runtime via `language_registry_validator.ts`.
 
 ---
 

@@ -1,0 +1,73 @@
+{
+  "version": "1.0",
+  "description": "Piper TTS model manifest. Run scripts/download_piper_models.sh to fetch all models.",
+  "source": "https://huggingface.co/rhasspy/piper-voices",
+  "models": [
+    {
+      "voice": "en_US-lessac-high",
+      "language": "en",
+      "region": "en_US",
+      "gender": "female",
+      "quality": "high",
+      "size_bytes": 113895201,
+      "sha256": "4cabf7c3a638017137f34a1516522032d4fe3f38228a843cc9b764ddcbcd9e09",
+      "onnx_url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/high/en_US-lessac-high.onnx",
+      "config_url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/high/en_US-lessac-high.onnx.json"
+    },
+    {
+      "voice": "en_US-ryan-high",
+      "language": "en",
+      "region": "en_US",
+      "gender": "male",
+      "quality": "high",
+      "size_bytes": 120786792,
+      "sha256": "b3990d7606e183ec8dbfba70a4607074f162de1a0c412e0180d1ff60bb154eca",
+      "onnx_url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/en_US-ryan-high.onnx",
+      "config_url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/en_US-ryan-high.onnx.json"
+    },
+    {
+      "voice": "hi_IN-priyamvada-medium",
+      "language": "hi",
+      "region": "hi_IN",
+      "gender": "female",
+      "quality": "medium",
+      "size_bytes": 63516050,
+      "sha256": "aa63bcf2cd493b55a450f280e23cf77f03afc9af7015e6e5acd43b652f166c88",
+      "onnx_url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/hi/hi_IN/priyamvada/medium/hi_IN-priyamvada-medium.onnx",
+      "config_url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/hi/hi_IN/priyamvada/medium/hi_IN-priyamvada-medium.onnx.json"
+    },
+    {
+      "voice": "hi_IN-rohan-medium",
+      "language": "hi",
+      "region": "hi_IN",
+      "gender": "male",
+      "quality": "medium",
+      "size_bytes": 62950044,
+      "sha256": "b65dc80fb34d9dcd1cf684cb297966a34983bbc93bb1696fe207f32b0b33a091",
+      "onnx_url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/hi/hi_IN/rohan/medium/hi_IN-rohan-medium.onnx",
+      "config_url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/hi/hi_IN/rohan/medium/hi_IN-rohan-medium.onnx.json"
+    },
+    {
+      "voice": "te_IN-maya-medium",
+      "language": "te",
+      "region": "te_IN",
+      "gender": "female",
+      "quality": "medium",
+      "size_bytes": 62950044,
+      "sha256": "c3518ad4e3ca8ea6059c1e002f3772068f634960f58b237a96ff629db1c6200e",
+      "onnx_url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/te/te_IN/maya/medium/te_IN-maya-medium.onnx",
+      "config_url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/te/te_IN/maya/medium/te_IN-maya-medium.onnx.json"
+    },
+    {
+      "voice": "te_IN-venkatesh-medium",
+      "language": "te",
+      "region": "te_IN",
+      "gender": "male",
+      "quality": "medium",
+      "size_bytes": 63516050,
+      "sha256": "dfaa5b7833cd48d946f3fe18c9c934aaa4e8590aac6922fddf34783a694c3c87",
+      "onnx_url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/te/te_IN/venkatesh/medium/te_IN-venkatesh-medium.onnx",
+      "config_url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/te/te_IN/venkatesh/medium/te_IN-venkatesh-medium.onnx.json"
+    }
+  ]
+}
