@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.5",
+  "video_id": "ui_flow_scenes_test_en",
+  "topic": "ui_flow_scenes_test",
+  "language": "en",
+  "mode": "ui_flow_scenes",
+  "baseUrl": "https://example.com",
+  "intro": {
+    "scene_id": "s0_intro",
+    "asset_path": "visuals/intro_12345_1.0.png",
+    "prompt_key": "intro",
+    "seed": 12345,
+    "model_version": "1.0",
+    "narration": {
+      "text_template_key": "intro_en",
+      "language": "en",
+      "voice_gender": "female",
+      "speed": 1.0
+    },
+    "buffer_sec": 1,
+    "music": "music/bg.mp3"
+  },
+  "summary": {
+    "scene_id": "s_summary",
+    "asset_path": "visuals/summary_12345_1.0.png",
+    "prompt_key": "summary",
+    "seed": 12345,
+    "model_version": "1.0",
+    "narration": {
+      "text_template_key": "summary_en",
+      "language": "en",
+      "voice_gender": "female",
+      "speed": 1.0
+    },
+    "buffer_sec": 1,
+    "music": "music/bg.mp3"
+  },
+  "recording_enhancements": {
+    "clickSound": true,
+    "clickHighlight": true,
+    "highlightColor": "#FF6B35",
+    "highlightDurationMs": 600,
+    "cursorHighlight": true,
+    "ambientSounds": true,
+    "zoomToAction": false,
+    "zoomLevel": 0.18
+  },
+  "post_production": {
+    "stepTitleCard": true,
+    "progressIndicator": true,
+    "transitionSound": true,
+    "chapterMarkers": true,
+    "subtitleTrack": true,
+    "thumbnail": true,
+    "videoDescription": true
+  },
+  "scenes": [
+    {
+      "scene_id": "s1_step1",
+      "title": "Step 1: Login",
+      "narration": {
+        "text_template_key": "step1_en",
+        "language": "en",
+        "voice_gender": "female",
+        "speed": 1.0
+      },
+      "buffer_sec": 2,
+      "music": "music/bg.mp3",
+      "steps": [
+        { "action": "navigate", "url": "/" },
+        { "action": "done" }
+      ]
+    }
+  ]
+}

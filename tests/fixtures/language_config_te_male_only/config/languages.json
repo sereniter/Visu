@@ -1,0 +1,19 @@
+{
+  "version": "1.1",
+  "supported": {
+    "te": {
+      "name": "Telugu",
+      "adapter": "local_piper",
+      "sampleRate": 48000,
+      "nativeModelRate": 22050,
+      "voices": {
+        "male": {
+          "voice": "te_IN-venkatesh-medium",
+          "modelPath": "models/piper/te_IN-venkatesh-medium.onnx",
+          "modelConfig": "models/piper/te_IN-venkatesh-medium.onnx.json",
+          "modelHash": "dfaa5b7833cd48d946f3fe18c9c934aaa4e8590aac6922fddf34783a694c3c87"
+        }
+      }
+    }
+  }
+}

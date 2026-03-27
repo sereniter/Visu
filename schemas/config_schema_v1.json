@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://visu/schemas/config_schema_v1.json",
+  "title": "VISU Config v1",
+  "description": "VISU configuration with content and output repository paths",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["contentRoot", "outputRoot"],
+  "properties": {
+    "contentRoot": { "type": "string", "minLength": 1 },
+    "outputRoot": { "type": "string", "minLength": 1 }
+  }
+}

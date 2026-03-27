@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "grades": {
+    "cinematic_dark": {
+      "eq": "contrast=1.30:brightness=-0.07:saturation=0.70:gamma=0.85",
+      "curves": "r='0/0 0.1/0.06 0.5/0.42 1/0.88':g='0/0 0.1/0.07 0.5/0.44 1/0.90':b='0/0 0.1/0.10 0.5/0.50 1/0.97'",
+      "vignette": "angle=PI/4:mode=backward",
+      "grain": null
+    },
+    "warm_sunset": {
+      "eq": "contrast=1.10:brightness=0.03:saturation=1.20:gamma=1.05",
+      "curves": "r='0/0 0.5/0.58 1/1':g='0/0 0.5/0.46 1/0.92':b='0/0 0.5/0.38 1/0.82'",
+      "vignette": "angle=PI/5:mode=backward",
+      "grain": null
+    },
+    "cold_war": {
+      "eq": "contrast=1.30:brightness=-0.04:saturation=0.50:gamma=0.90",
+      "curves": "r='0/0 0.5/0.40 1/0.82':g='0/0 0.5/0.43 1/0.86':b='0/0 0.5/0.54 1/1.0'",
+      "vignette": "angle=PI/5:mode=backward",
+      "grain": null
+    },
+    "news_neutral": {
+      "eq": "contrast=1.12:brightness=0.02:saturation=0.90",
+      "curves": null,
+      "vignette": null,
+      "grain": null
+    },
+    "high_contrast": {
+      "eq": "contrast=1.50:brightness=0.0:saturation=1.25:gamma=0.88",
+      "curves": "r='0/0 0.25/0.15 0.75/0.88 1/1':g='0/0 0.25/0.15 0.75/0.88 1/1':b='0/0 0.25/0.15 0.75/0.88 1/1'",
+      "vignette": "angle=PI/4:mode=backward",
+      "grain": null
+    }
+  }
+}

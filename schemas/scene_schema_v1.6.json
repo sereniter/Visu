@@ -1,0 +1,242 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://visu/schemas/scene_schema_v1.6.json",
+  "title": "VISU Scene Contract v1.6 (ui_flow_scenes)",
+  "description": "Scene-driven Mode A: intro, summary, recording enhancements, post_production, scenes with steps. v1.6 adds optional renderer fields for intro/summary and useRemotionOverlays in post_production.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "video_id",
+    "topic",
+    "language",
+    "mode",
+    "baseUrl",
+    "intro",
+    "summary",
+    "recording_enhancements",
+    "post_production",
+    "scenes"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.6" },
+    "video_id": { "type": "string" },
+    "topic": { "type": "string", "minLength": 1, "pattern": "^[^/\\\\]+$" },
+    "language": { "type": "string", "minLength": 1 },
+    "mode": { "type": "string", "const": "ui_flow_scenes" },
+    "baseUrl": { "type": "string" },
+    "intro": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scene_id",
+        "asset_path",
+        "prompt_key",
+        "seed",
+        "model_version",
+        "narration",
+        "buffer_sec",
+        "music"
+      ],
+      "properties": {
+        "renderer": {
+          "type": "string",
+          "enum": ["png", "remotion"]
+        },
+        "scene_id": { "type": "string" },
+        "asset_path": { "type": "string" },
+        "prompt_key": { "type": "string" },
+        "seed": { "type": "integer" },
+        "model_version": { "type": "string" },
+        "narration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["text_template_key", "language", "voice_gender", "speed"],
+          "properties": {
+            "text_template_key": { "type": "string" },
+            "language": { "type": "string" },
+            "voice_gender": { "type": "string", "enum": ["male", "female"] },
+            "speed": { "type": "number" }
+          }
+        },
+        "buffer_sec": { "type": "number" },
+        "music": { "type": "string" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scene_id",
+        "asset_path",
+        "prompt_key",
+        "seed",
+        "model_version",
+        "narration",
+        "buffer_sec",
+        "music"
+      ],
+      "properties": {
+        "renderer": {
+          "type": "string",
+          "enum": ["png", "remotion"]
+        },
+        "scene_id": { "type": "string" },
+        "asset_path": { "type": "string" },
+        "prompt_key": { "type": "string" },
+        "seed": { "type": "integer" },
+        "model_version": { "type": "string" },
+        "narration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["text_template_key", "language", "voice_gender", "speed"],
+          "properties": {
+            "text_template_key": { "type": "string" },
+            "language": { "type": "string" },
+            "voice_gender": { "type": "string", "enum": ["male", "female"] },
+            "speed": { "type": "number" }
+          }
+        },
+        "buffer_sec": { "type": "number" },
+        "music": { "type": "string" }
+      }
+    },
+    "recording_enhancements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "clickSound",
+        "clickHighlight",
+        "highlightColor",
+        "highlightDurationMs",
+        "cursorHighlight",
+        "ambientSounds",
+        "zoomToAction",
+        "zoomLevel"
+      ],
+      "properties": {
+        "clickSound": { "type": "boolean" },
+        "clickHighlight": { "type": "boolean" },
+        "highlightColor": { "type": "string" },
+        "highlightDurationMs": { "type": "number" },
+        "cursorHighlight": { "type": "boolean" },
+        "ambientSounds": { "type": "boolean" },
+        "zoomToAction": { "type": "boolean" },
+        "zoomLevel": { "type": "number" }
+      }
+    },
+    "post_production": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stepTitleCard",
+        "progressIndicator",
+        "transitionSound",
+        "chapterMarkers",
+        "subtitleTrack",
+        "thumbnail",
+        "videoDescription"
+      ],
+      "properties": {
+        "stepTitleCard": { "type": "boolean" },
+        "progressIndicator": { "type": "boolean" },
+        "transitionSound": { "type": "boolean" },
+        "chapterMarkers": { "type": "boolean" },
+        "subtitleTrack": { "type": "boolean" },
+        "thumbnail": { "type": "boolean" },
+        "videoDescription": { "type": "boolean" },
+        "useRemotionOverlays": { "type": "boolean" }
+      }
+    },
+    "scenes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scene_id", "title", "narration", "buffer_sec", "music", "steps"],
+        "properties": {
+          "scene_id": { "type": "string" },
+          "title": { "type": "string" },
+          "narration": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text_template_key", "language", "voice_gender", "speed"],
+            "properties": {
+              "text_template_key": { "type": "string" },
+              "language": { "type": "string" },
+              "voice_gender": { "type": "string", "enum": ["male", "female"] },
+              "speed": { "type": "number" }
+            }
+          },
+          "buffer_sec": { "type": "number" },
+          "music": { "type": "string" },
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["action"],
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "navigate",
+                    "click",
+                    "fill",
+                    "wait",
+                    "wait_ms",
+                    "scroll",
+                    "screenshot",
+                    "done"
+                  ]
+                },
+                "url": { "type": "string" },
+                "selector": { "type": "string" },
+                "value": { "type": "string" },
+                "locator": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["type"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "getByRole",
+                        "getByText",
+                        "getByLabel",
+                        "getByPlaceholder",
+                        "locator"
+                      ]
+                    },
+                    "role": { "type": "string" },
+                    "text": { "type": "string" },
+                    "selector": { "type": "string" },
+                    "options": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": { "type": "string" },
+                        "exact": { "type": "boolean" }
+                      }
+                    },
+                    "filter": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "hasText": { "type": "string" }
+                      }
+                    },
+                    "nth": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,6 @@
+{
+  "test_intro_template": { "template": "ఓ.", "language": "te", "variables": [] },
+  "test_scene_narration": { "template": "ఓ.", "language": "te", "variables": [] },
+  "intro_en": { "template": "Hello.", "language": "en", "variables": [] },
+  "intro_hi": { "template": "नमस्ते.", "language": "hi", "variables": [] }
+}

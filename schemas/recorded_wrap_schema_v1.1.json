@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://visu/schemas/recorded_wrap_schema_v1.1.json",
+  "title": "VISU Recorded Mode Wrap v1.1",
+  "description": "Optional intro/summary wrapping contract for Mode B (recorded).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.1"
+    },
+    "wrap": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "intro": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["renderer", "component", "props"],
+          "properties": {
+            "renderer": {
+              "type": "string",
+              "enum": ["png", "remotion"]
+            },
+            "component": {
+              "type": "string",
+              "enum": ["IntroCard"]
+            },
+            "props": {
+              "type": "object"
+            }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["renderer", "component", "props"],
+          "properties": {
+            "renderer": {
+              "type": "string",
+              "enum": ["png", "remotion"]
+            },
+            "component": {
+              "type": "string",
+              "enum": ["SummaryCard"]
+            },
+            "props": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

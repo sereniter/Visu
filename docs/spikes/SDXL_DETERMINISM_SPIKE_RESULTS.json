@@ -1,0 +1,16 @@
+{
+  "spike_id": "SDXL_DETERMINISM",
+  "purpose": "Establish factual basis for Mode C generative visuals: hardware feasibility and determinism with fixed seed.",
+  "spike_location": "spikes/sdxl_determinism_spike",
+  "outcome": "Runtime inference removed for Mode C. Visual generation is offline; pipeline consumes pre-generated PNGs with provenance sidecars. Determinism guaranteed by static assets and locked encoding profile.",
+  "decisions": [
+    "Mode C does not run SDXL or any AI inference at runtime.",
+    "Governed PNGs are produced offline; provenance sidecar (schemas/provenance_schema_v1.json) and output_hash verification ensure integrity.",
+    "Scene clip encoding profile locked to match AVMergeEngine for deterministic downstream transcode."
+  ],
+  "references": [
+    "SPRINT_6B_EXECUTION_PLAN_v1.2_FINAL.md",
+    "schemas/provenance_schema_v1.json",
+    "ENVIRONMENT.md (Mode C visual asset authoring)"
+  ]
+}

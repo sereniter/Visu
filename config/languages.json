@@ -1,0 +1,65 @@
+{
+  "version": "1.1",
+  "supported": {
+    "en": {
+      "name": "English",
+      "adapter": "local_piper",
+      "sampleRate": 48000,
+      "nativeModelRate": 22050,
+      "voices": {
+        "male": {
+          "voice": "en_US-libritts-high",
+          "modelPath": "models/piper/en_US-libritts-high.onnx",
+          "modelConfig": "models/piper/en_US-libritts-high.onnx.json",
+          "modelHash": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "female": {
+          "voice": "en_US-libritts-high-female",
+          "modelPath": "models/piper/en_US-libritts-high-female.onnx",
+          "modelConfig": "models/piper/en_US-libritts-high-female.onnx.json",
+          "modelHash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "hi": {
+      "name": "Hindi",
+      "adapter": "local_piper",
+      "sampleRate": 48000,
+      "nativeModelRate": 22050,
+      "voices": {
+        "male": {
+          "voice": "hi_IN-high-male",
+          "modelPath": "models/piper/hi_IN-high-male.onnx",
+          "modelConfig": "models/piper/hi_IN-high-male.onnx.json",
+          "modelHash": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "female": {
+          "voice": "hi_IN-high-female",
+          "modelPath": "models/piper/hi_IN-high-female.onnx",
+          "modelConfig": "models/piper/hi_IN-high-female.onnx.json",
+          "modelHash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    "te": {
+      "name": "Telugu",
+      "adapter": "local_piper",
+      "sampleRate": 48000,
+      "nativeModelRate": 22050,
+      "voices": {
+        "male": {
+          "voice": "te_IN-venkatesh-medium",
+          "modelPath": "models/piper/te_IN-venkatesh-medium.onnx",
+          "modelConfig": "models/piper/te_IN-venkatesh-medium.onnx.json",
+          "modelHash": "dfaa5b7833cd48d946f3fe18c9c934aaa4e8590aac6922fddf34783a694c3c87"
+        },
+        "female": {
+          "voice": "te_IN-maya-medium",
+          "modelPath": "models/piper/te_IN-maya-medium.onnx",
+          "modelConfig": "models/piper/te_IN-maya-medium.onnx.json",
+          "modelHash": "c3518ad4e3ca8ea6059c1e002f3772068f634960f58b237a96ff629db1c6200e"
+        }
+      }
+    }
+  }
+}

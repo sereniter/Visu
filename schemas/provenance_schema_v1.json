@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://visu/schemas/provenance_schema_v1.json",
+  "title": "VISU Provenance Sidecar v1",
+  "description": "Provenance metadata for governed PNG assets (Mode C).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "prompt_key",
+    "prompt_text_hash",
+    "model",
+    "model_version",
+    "model_file_hash",
+    "seed",
+    "sampler",
+    "steps",
+    "resolution",
+    "torch_version",
+    "diffusers_version",
+    "generated_at",
+    "output_hash"
+  ],
+  "properties": {
+    "prompt_key": { "type": "string" },
+    "prompt_text_hash": { "type": "string" },
+    "model": { "type": "string" },
+    "model_version": { "type": "string" },
+    "model_file_hash": { "type": "string" },
+    "seed": { "type": "integer" },
+    "sampler": { "type": "string" },
+    "steps": { "type": "integer" },
+    "resolution": { "type": "string" },
+    "torch_version": { "type": "string" },
+    "diffusers_version": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "output_hash": { "type": "string" }
+  }
+}

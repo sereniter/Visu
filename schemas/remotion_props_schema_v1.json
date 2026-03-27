@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "definitions": {
+    "AnukramAIIntroProps": {
+      "type": "object",
+      "required": ["title", "subtitle", "language", "stepCount", "accentColor"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subtitle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "language": {
+          "type": "string",
+          "enum": ["en", "hi", "te"]
+        },
+        "stepCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "accentColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "logoPath": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-\\.]+\\.(png|jpg|svg)$"
+        }
+      }
+    },
+    "AnukramAISummaryProps": {
+      "type": "object",
+      "required": ["title", "subtitle", "language", "completedSteps", "accentColor"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subtitle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "language": {
+          "type": "string",
+          "enum": ["en", "hi", "te"]
+        },
+        "completedSteps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "accentColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "logoPath": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-\\.]+\\.(png|jpg|svg)$"
+        }
+      }
+    },
+    "SceneTitleCardProps": {
+      "type": "object",
+      "required": ["title", "language", "accentColor", "showDurationFrames"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "language": {
+          "type": "string",
+          "enum": ["en", "hi", "te"]
+        },
+        "accentColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "showDurationFrames": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600
+        }
+      }
+    },
+    "ProgressOverlayProps": {
+      "type": "object",
+      "required": ["currentStep", "totalSteps", "language", "accentColor"],
+      "additionalProperties": false,
+      "properties": {
+        "currentStep": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "totalSteps": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "language": {
+          "type": "string",
+          "enum": ["en", "hi", "te"]
+        },
+        "accentColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        }
+      }
+    }
+  }
+}

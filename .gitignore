@@ -1,0 +1,68 @@
+# Build
+dist/
+
+# Dependencies
+node_modules/
+
+# Logs and runtime
+logs/
+*.log
+.env
+.env.*
+!.env.example
+.env.local
+
+# Remotion / artifacts
+remotion-templates/out/
+.remotion/
+artifacts/
+
+# Playwright (library / future @playwright/test output)
+test-results/
+playwright-report/
+blob-report/
+
+# Python (spikes / tools)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+
+# IDE / OS
+.DS_Store
+*.tsbuildinfo
+.idea/
+*.swp
+*.swo
+
+# Test / coverage / caches
+coverage/
+.vitest/
+.eslintcache
+
+# Stray TypeScript emit beside sources (canonical compile output: dist/)
+/vitest.config.js
+/vitest.config.js.map
+/vitest.config.d.ts
+/vitest.config.d.ts.map
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map
+tests/**/*.js
+tests/**/*.js.map
+tests/**/*.d.ts
+tests/**/*.d.ts.map
+!tests/fixtures/**/*.js
+
+# Remotion package: sources under src/ are .ts/.tsx; config is remotion.config.ts
+remotion-templates/remotion.config.js
+remotion-templates/remotion.config.js.map
+remotion-templates/remotion.config.d.ts
+remotion-templates/remotion.config.d.ts.map
+remotion-templates/src/**/*.js
+remotion-templates/src/**/*.js.map
+remotion-templates/src/**/*.d.ts
+remotion-templates/src/**/*.d.ts.map

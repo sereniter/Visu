@@ -1,0 +1,20 @@
+{
+  "intro_en": {
+    "version": "1.0",
+    "text": "Introduction to the flow.",
+    "language": "en",
+    "variables": []
+  },
+  "summary_en": {
+    "version": "1.0",
+    "text": "Summary of the flow.",
+    "language": "en",
+    "variables": []
+  },
+  "step1_en": {
+    "version": "1.0",
+    "text": "Step one: navigate to the page.",
+    "language": "en",
+    "variables": []
+  }
+}

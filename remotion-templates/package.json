@@ -1,0 +1,29 @@
+{
+  "name": "@anukramai/remotion-templates",
+  "version": "1.0.0",
+  "description": "Remotion video components for AnukramAI / VISU",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "studio": "npx remotion studio",
+    "render:intro": "npx remotion render src/index.ts AnukramAIIntro out/intro.mp4",
+    "render:summary": "npx remotion render src/index.ts AnukramAISummary out/summary.mp4",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.435",
+    "@remotion/google-fonts": "^4.0.435",
+    "@remotion/light-leaks": "^4.0.435",
+    "@remotion/motion-blur": "^4.0.435",
+    "@remotion/paths": "^4.0.435",
+    "@remotion/shapes": "^4.0.435",
+    "@remotion/transitions": "^4.0.435",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "^4.0.435"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.1",
+    "typescript": "5.4.5"
+  }
+}

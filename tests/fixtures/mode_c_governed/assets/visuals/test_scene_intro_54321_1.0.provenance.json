@@ -1,0 +1,15 @@
+{
+  "prompt_key": "test_scene_intro",
+  "prompt_text_hash": "dummy_hash_for_test",
+  "model": "stable-diffusion-xl",
+  "model_version": "1.0",
+  "model_file_hash": "dummy_model_hash",
+  "seed": 54321,
+  "sampler": "DDIM",
+  "steps": 30,
+  "resolution": "1920x1080",
+  "torch_version": "2.2.2",
+  "diffusers_version": "0.27.2",
+  "generated_at": "2024-01-01T00:00:00Z",
+  "output_hash": "4059f633672445d14b17cb674cf7aa4ecba63e14b0087d138cfa6bf3c95bf1f3"
+}

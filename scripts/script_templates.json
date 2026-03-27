@@ -1,0 +1,20 @@
+{
+  "login_flow_en": {
+    "version": "1.0",
+    "text": "Welcome to AnukramAI. To get started, enter your registered email address and password on the login page. Once your credentials are entered, click the login button to access your learning dashboard.",
+    "language": "en",
+    "variables": []
+  },
+  "login_flow_hi": {
+    "version": "1.0",
+    "text": "AnukramAI में आपका स्वागत है। शुरू करने के लिए, लॉगिन पेज पर अपना पंजीकृत ईमेल पता और पासवर्ड दर्ज करें। क्रेडेंशियल दर्ज करने के बाद, अपने लर्निंग डैशबोर्ड तक पहुंचने के लिए लॉगिन बटन पर क्लिक करें।",
+    "language": "hi",
+    "variables": []
+  },
+  "login_flow_te": {
+    "version": "1.0",
+    "text": "AnukramAI కి స్వాగతం. ప్రారంభించడానికి, లాగిన్ పేజీలో మీ నమోదిత ఇమెయిల్ చిరునామా మరియు పాస్‌వర్డ్ నమోదు చేయండి. మీ వివరాలు నమోదు చేసిన తర్వాత, మీ లెర్నింగ్ డ్యాష్‌బోర్డ్ యాక్సెస్ చేయడానికి లాగిన్ బటన్ క్లిక్ చేయండి.",
+    "language": "te",
+    "variables": []
+  }
+}

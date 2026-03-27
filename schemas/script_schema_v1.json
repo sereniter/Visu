@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://visu/schemas/script_schema_v1.json",
+  "title": "VISU Narration Script v1",
+  "description": "Narration script for TTS: version, language, and either text or template (template used as spoken text).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "language"
+  ],
+  "oneOf": [
+    { "required": ["text"], "properties": { "text": { "type": "string", "minLength": 1 } } },
+    { "required": ["template"], "properties": { "template": { "type": "string", "minLength": 1 } } }
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "hi",
+        "te"
+      ]
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "template": {
+      "type": "string",
+      "minLength": 1
+    },
+    "variables": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

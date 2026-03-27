@@ -1,0 +1,8 @@
+{
+  "test_scene_intro": {
+    "prompt": "Minimal invoice dashboard UI, clean layout, light background",
+    "negative_prompt": "",
+    "approved": true,
+    "version": "1.0"
+  }
+}

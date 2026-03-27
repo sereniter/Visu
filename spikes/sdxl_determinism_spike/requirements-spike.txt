@@ -1,0 +1,10 @@
+# Spike only — not part of main Visu runtime.
+# Install in a dedicated venv: pip install -r requirements-spike.txt
+# Pinned for macOS Intel + torch 2.2: numpy<2, transformers<5, diffusers<0.28, huggingface_hub<0.22 (cached_download).
+numpy<2
+torch>=2.0.0,<2.4
+diffusers>=0.25.0,<0.28
+transformers>=4.35.0,<5.0
+accelerate>=0.25.0
+safetensors>=0.4.0
+huggingface_hub>=0.20.2,<0.22

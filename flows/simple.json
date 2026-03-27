@@ -1,0 +1,8 @@
+{
+  "flow_id": "simple",
+  "version": "1.0",
+  "steps": [
+    { "step_id": "s1", "action": "navigate", "url": "https://example.com" },
+    { "step_id": "s2", "action": "done" }
+  ]
+}

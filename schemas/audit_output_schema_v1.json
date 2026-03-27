@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://visu/schemas/audit_output_schema_v1.json",
+  "title": "VISU Audit Output v1",
+  "description": "Output of visu audit --runId (Sprint 7).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["runId", "mode", "determinismLevel", "status", "checked", "mismatches"],
+  "properties": {
+    "runId": { "type": "string" },
+    "mode": { "type": "string", "enum": ["ui_flow", "recorded", "generative"] },
+    "determinismLevel": { "type": "string", "enum": ["environment-sensitive", "binary-sensitive"] },
+    "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+    "checked": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ffmpegBinaryFingerprint", "piperBinaryFingerprint", "nodeVersion", "configHash", "encodingProfile", "finalVideoSha256"],
+      "properties": {
+        "ffmpegBinaryFingerprint": { "type": "boolean" },
+        "piperBinaryFingerprint": { "type": "boolean" },
+        "nodeVersion": { "type": "boolean" },
+        "configHash": { "type": "boolean" },
+        "encodingProfile": { "type": "boolean" },
+        "finalVideoSha256": { "type": "boolean" }
+      }
+    },
+    "mismatches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "severity", "expected", "actual"],
+        "properties": {
+          "field": { "type": "string" },
+          "severity": { "type": "string", "enum": ["critical", "warning"] },
+          "expected": { "type": "string" },
+          "actual": { "type": "string" }
+        }
+      }
+    }
+  }
+}

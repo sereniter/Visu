@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "video_id": "mode_c_fixture",
+  "scenes": [
+    {
+      "scene_id": "scene1",
+      "video_path": "tests/fixtures/scene1.mp4",
+      "narration_path": "tests/fixtures/scene1_narration.wav",
+      "duration_sec": 5
+    },
+    {
+      "scene_id": "scene2",
+      "video_path": "tests/fixtures/scene2.mp4",
+      "narration_path": "tests/fixtures/scene2_narration.wav",
+      "duration_sec": 5
+    }
+  ]
+}

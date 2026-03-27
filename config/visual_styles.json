@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "styles": {
+    "war_documentary": {
+      "grade": "cinematic_dark",
+      "motion": { "type": "zoom_in", "focus": "center", "intensity": 0.20 },
+      "overlay_font_color": "ffffff",
+      "overlay_shadow": true
+    },
+    "historical_archive": {
+      "grade": "warm_sunset",
+      "motion": { "type": "pan_right", "focus": "center", "intensity": 0.15 },
+      "overlay_font_color": "fffdd0",
+      "overlay_shadow": true
+    },
+    "geopolitical_tension": {
+      "grade": "cold_war",
+      "motion": { "type": "zoom_in", "focus": "center", "intensity": 0.22 },
+      "overlay_font_color": "ffffff",
+      "overlay_shadow": true
+    },
+    "news_report": {
+      "grade": "news_neutral",
+      "motion": { "type": "pan_left", "focus": "center", "intensity": 0.10 },
+      "overlay_font_color": "ffffff",
+      "overlay_shadow": false
+    },
+    "impact_moment": {
+      "grade": "high_contrast",
+      "motion": { "type": "zoom_in", "focus": "center", "intensity": 0.25 },
+      "overlay_font_color": "ffffff",
+      "overlay_shadow": true
+    }
+  }
+}

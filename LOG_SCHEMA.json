@@ -1,0 +1,10 @@
+{
+    "timestamp": "ISO_8601_string",
+    "execution_id": "unique_execution_identifier",
+    "flow_name": "string",
+    "flow_version": "string",
+    "status": "success | failure",
+    "duration_ms": 0,
+    "output_file": "optional_output_path",
+    "error": null
+}

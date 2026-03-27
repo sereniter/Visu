@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://visu/schemas/language_registry_schema_v1.json",
+  "title": "VISU Language Registry v1",
+  "description": "Governance for supported TTS languages and Piper model paths.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "supported"],
+  "properties": {
+    "version": { "type": "string", "const": "1.0" },
+    "supported": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "adapter", "modelPath", "modelConfig", "voice", "sampleRate", "nativeModelRate", "modelHash"],
+        "properties": {
+          "name": { "type": "string" },
+          "adapter": { "type": "string", "enum": ["local_piper"] },
+          "modelPath": { "type": "string" },
+          "modelConfig": { "type": "string" },
+          "voice": { "type": "string" },
+          "sampleRate": { "type": "integer", "const": 48000 },
+          "nativeModelRate": { "type": "integer" },
+          "modelHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    }
+  }
+}

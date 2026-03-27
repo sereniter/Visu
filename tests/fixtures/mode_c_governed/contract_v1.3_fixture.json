@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.3",
+  "video_id": "test_mode_c_001",
+  "scenes": [
+    {
+      "scene_id": "scene_1",
+      "duration_sec": 1,
+      "visual": {
+        "type": "governed_image",
+        "asset_path": "assets/visuals/test_scene_intro_12345_1.0.png",
+        "prompt_key": "test_scene_intro",
+        "seed": 12345,
+        "model_version": "1.0"
+      },
+      "narration": {
+        "text_template_key": "test_intro_template",
+        "language": "te",
+        "voice_gender": "male",
+        "speed": 0.38
+      }
+    }
+  ]
+}

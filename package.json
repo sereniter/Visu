@@ -1,0 +1,36 @@
+{
+  "name": "visu",
+  "version": "0.1.0",
+  "description": "VISU – Viṣaya Sraṣṭā (Deterministic Content Execution Engine)",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "npm run build && node dist/index.js",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "lint": "eslint src tests",
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\""
+  },
+  "keywords": [],
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/minimist": "^1.2.5",
+    "@types/node": "^22.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
+    "ajv": "^8.17.1",
+    "eslint": "^9.15.0",
+    "prettier": "^3.4.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.17.0",
+    "vitest": "^2.1.6"
+  },
+  "dependencies": {
+    "minimist": "1.2.8",
+    "playwright": "1.58.2"
+  }
+}

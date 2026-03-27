@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://visu/schemas/upload_metadata_schema_v1.json",
+  "title": "VISU Upload Metadata v1",
+  "description": "Metadata for YouTube upload (Sprint 7).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["youtubeVideoId", "uploadedAt", "title", "visibility"],
+  "properties": {
+    "youtubeVideoId": { "type": "string" },
+    "uploadedAt": { "type": "string" },
+    "title": { "type": "string" },
+    "visibility": { "type": "string", "enum": ["public", "unlisted", "private"] }
+  }
+}

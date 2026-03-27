@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "google_fonts": true,
+  "styles": {
+    "war_documentary":      { "heading": "Bebas Neue",    "body": "Montserrat",  "weight": 700 },
+    "historical_archive":   { "heading": "Oswald",        "body": "Lora",        "weight": 600 },
+    "geopolitical_tension": { "heading": "League Gothic", "body": "Montserrat",  "weight": 700 },
+    "news_report":          { "heading": "Montserrat",    "body": "Roboto",      "weight": 700 },
+    "impact_moment":        { "heading": "Anton",         "body": "Montserrat",  "weight": 700 }
+  },
+  "languages": {
+    "te": { "heading": "Ramabhadra",  "body": "Noto Sans Telugu", "weight": 700 },
+    "hi": { "heading": "Hind",        "body": "Noto Sans",        "weight": 700 },
+    "en": { "heading": "Bebas Neue",  "body": "Montserrat",       "weight": 700 }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.3",
+  "video_id": "migrate-v13",
+  "scenes": [
+    {
+      "scene_id": "s1",
+      "duration_sec": 1,
+      "visual": {
+        "type": "governed_image",
+        "asset_path": "x.png",
+        "prompt_key": "k",
+        "seed": 1,
+        "model_version": "1.0"
+      },
+      "narration": {
+        "text_template_key": "t",
+        "language": "te",
+        "voice_gender": "male",
+        "speed": 1
+      }
+    }
+  ]
+}
