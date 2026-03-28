@@ -46,7 +46,7 @@ Errors are identified by cause and typical log messages. Use this table to map w
 | `YOUTUBE_QUOTA_EXCEEDED` | 1 | Daily upload quota exhausted. | Wait or request quota increase. |
 | `YOUTUBE_UPLOAD_FAILED` | 1 | Upload failed (e.g. 5xx). | Retry — often transient. |
 | `REMOTION_NOT_FOUND` | 2 | `npx remotion` not available in PATH or install failed. | Run `npm install` in `remotion-templates` and ensure `npx remotion` works. |
-| `REMOTION_TEMPLATES_NOT_FOUND` | 2 | `remotion-templates` directory (templatesRoot) not found. | Check `remotion.templatesRoot` in `config/default.json` and ensure the directory exists. |
+| `REMOTION_TEMPLATES_NOT_FOUND` | 2 | `remotion-templates` directory (templatesRoot) not found. | Check `remotion.templatesRoot` in `config/shared.json` (after merge with the active mode file) and ensure the directory exists. |
 | `REMOTION_PROPS_INVALID` | 2 | Remotion props failed validation against `remotion_props_schema_v1.json`. | Fix the props payload to satisfy the schema for the composition. |
 | `REMOTION_RENDER_FAILED` | 1 | Remotion render process exited with non-zero code. | Inspect Remotion logs in the run log and fix the underlying error. |
 | `REMOTION_OUTPUT_MISSING` | 1 | Remotion reported success but output MP4 was not written. | Check disk space, permissions, and output path. |
@@ -55,7 +55,7 @@ Errors are identified by cause and typical log messages. Use this table to map w
 | `REMOTION_CHROMIUM_LOCK_MISSING` | 2 | CHROMIUM_BINARY.lock not found under remotion-templates. | Run `node scripts/record_chromium_hash.js` after `npm install` in remotion-templates and commit the file. |
 | `REMOTION_LOGO_NOT_FOUND` | 2 | logoPath file not in remotion-templates/public/. | Place the file under `remotion-templates/public/` or fix logoPath to a filename that exists there. |
 | **Sprint 13 — Remotion integration** | | | |
-| `REMOTION_DISABLED_IN_CONFIG` | 2 | Contract or wrap requests Remotion (intro/summary/overlay/wrap/remotion scene) but `config.remotion.enabled` is false. | Set `remotion.enabled: true` in `config/default.json` or do not request Remotion in the contract/wrap. No silent fallback. |
+| `REMOTION_DISABLED_IN_CONFIG` | 2 | Contract or wrap requests Remotion (intro/summary/overlay/wrap/remotion scene) but `config.remotion.enabled` is false. | Set `remotion.enabled: true` in `config/shared.json` (or the appropriate mode overlay) or do not request Remotion in the contract/wrap. No silent fallback. |
 | `REMOTION_OVERLAY_FAILED` | 1 | Mode A: SceneTitleCard or ProgressOverlay render or overlay composite failed (profile mismatch, stream mismatch, or Remotion/FFmpeg error). | Check run log for scene index and stderr; ensure Remotion compositions and FFmpeg overlay use locked profile. |
 | `SCREEN_CAPTURE_FAILED` | 1 | External FFmpeg-based screen capture failed to start or exited with non-zero code. | Inspect stderr excerpt in logs; verify avfoundation device indices, microphone/screen permissions, and ffmpeg availability. |
 | `SCREEN_CAPTURE_ALREADY_RUNNING` | 1 | Attempted to start screen capture while a previous capture is still active. | Ensure per-scene capture lifecycle is start→stop without overlap; fix engine logic. |

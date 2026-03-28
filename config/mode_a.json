@@ -1,0 +1,9 @@
+{
+  "browser": {
+    "headless": false,
+    "locale": "te-IN"
+  },
+  "remotion": {
+    "useRemotionOverlays": true
+  }
+}

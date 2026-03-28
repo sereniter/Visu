@@ -7,7 +7,7 @@ import { validateSceneContract, validateUIFlowScenesContract } from "./validator
 import minimist from "minimist";
 import { LOG_SCHEMA_VERSION } from "./core/run_context.js";
 import { createRunId, createLogger } from "./core/logger.js";
-import { getConfig, getConfigHash } from "./core/config.js";
+import { getConfig, getConfigHash, setActiveConfigMode } from "./core/config.js";
 import { writeRunMetadata } from "./core/run_metadata.js";
 import { validateFlow } from "./validators/flow_schema.js";
 import { validateFlowTermination } from "./validators/flow_termination.js";
@@ -81,6 +81,7 @@ async function main(): Promise<void> {
       console.error("visu resume requires --run-id <id> and --contract <path>");
       process.exit(2);
     }
+    setActiveConfigMode("c");
     const config = getConfig();
     const outputDir = join(process.cwd(), config.execution.artifactsDir, runId);
     const stitchedPath = join(outputDir, "stitched_video.mp4");
@@ -404,6 +405,7 @@ async function main(): Promise<void> {
       process.exitCode = 1;
       return;
     }
+    setActiveConfigMode("a");
     await runUIFlowMode(runId, flowPath, logger);
     return;
   }
@@ -415,6 +417,7 @@ async function main(): Promise<void> {
       process.exitCode = 1;
       return;
     }
+    setActiveConfigMode(null);
     await runNarrateMode(runId, scriptPath, logger);
     return;
   }
@@ -434,6 +437,7 @@ async function main(): Promise<void> {
     validateContentRoot();
     validateOutputRoot();
     validateTopicDir(topic);
+    setActiveConfigMode("b");
     const videoPathResolved = resolveContentPath(join(topic, videoPath));
     const scriptPathResolved = resolveContentPath(join(topic, "scripts", scriptPath));
     const wrapPathResolved = wrapPath ? resolveContentPath(join(topic, wrapPath)) : undefined;
@@ -461,6 +465,7 @@ async function main(): Promise<void> {
     try {
       validateContentRoot();
       validateOutputRoot();
+      setActiveConfigMode("c");
       await runModeCCLI(runId, contractPath, logger, {
         "strict-determinism": argv["strict-determinism"],
         "expected-ffmpeg-fingerprint": argv["expected-ffmpeg-fingerprint"],
@@ -489,6 +494,7 @@ async function main(): Promise<void> {
     }
     validateContentRoot();
     validateOutputRoot();
+    setActiveConfigMode("a");
     await runUIFlowScenesCLI(runId, contractPath, logger, {
       "strict-determinism": argv["strict-determinism"],
       "expected-ffmpeg-fingerprint": argv["expected-ffmpeg-fingerprint"],

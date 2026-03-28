@@ -7,6 +7,8 @@ export type ProgressOverlayProps = {
   totalSteps: number;
   language: string;
   accentColor: string;
+  /** Set by Visu from scene length so frame range matches Mode A screen capture duration. */
+  durationInFrames?: number;
 };
 
 export const ProgressOverlay: React.FC<ProgressOverlayProps> = ({

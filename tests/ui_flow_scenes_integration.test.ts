@@ -12,7 +12,7 @@ import { createLogger } from "../src/core/logger.js";
 import { LOG_SCHEMA_VERSION, type RunContext } from "../src/core/run_context.js";
 import { runUIFlowSceneEngine } from "../src/engines/ui_flow_scene_engine.js";
 import { FFmpegAdapter } from "../src/adapters/ffmpeg_adapter.js";
-import { getConfig, setConfigForTest } from "../src/core/config.js";
+import { getConfig, setActiveConfigMode, setConfigForTest } from "../src/core/config.js";
 
 const RUN_INTEGRATION = process.env.RUN_MODE_A_SCENES_INTEGRATION === "true";
 const FIXTURES_DIR = join(process.cwd(), "tests", "fixtures", "ui_flow_scenes");
@@ -53,6 +53,7 @@ describe("ui_flow_scenes_integration", () => {
     mkdirSync(join(TOPIC_DIR, "visuals"), { recursive: true });
     createPlaceholderPng(join(TOPIC_DIR, "visuals", "intro_12345_1.0.png"));
     createPlaceholderPng(join(TOPIC_DIR, "visuals", "summary_12345_1.0.png"));
+    setActiveConfigMode("a");
     const config = getConfig();
     setConfigForTest({ ...config, contentRoot: FIXTURES_DIR });
   });

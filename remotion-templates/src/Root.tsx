@@ -67,6 +67,18 @@ export const RemotionRoot: React.FC = () => {
         fps={30}
         width={1920}
         height={1080}
+        calculateMetadata={async ({ props }) => {
+          const p = props as { durationInFrames?: number };
+          const fps = 30;
+          const raw =
+            typeof p.durationInFrames === "number" &&
+            Number.isFinite(p.durationInFrames) &&
+            p.durationInFrames > 0
+              ? Math.ceil(p.durationInFrames)
+              : 300;
+          const durationInFrames = Math.min(Math.max(raw, 1), 3600 * fps);
+          return { durationInFrames, fps };
+        }}
         defaultProps={{
           currentStep: 1,
           totalSteps: 5,

@@ -67,8 +67,8 @@
 
 | Item | Status | Notes |
 |------|--------|--------|
-| **Config source** | ✅ File-based | `config/default.json`; no `process.env` in `src/` that feeds encode/TTS. |
-| **Config hash** | ✅ Reproducible | `getConfigHash()` uses `JSON.stringify(getConfig())`; same config → same hash. |
+| **Config source** | ✅ File-based | `config/shared.json` + optional `mode_{a,b,c}.json` (see docs/consumer/CONFIG_REFERENCE.md); legacy `config/default.json` if `shared.json` absent. No `process.env` in `src/` that feeds encode/TTS. |
+| **Config hash** | ✅ Reproducible | `getConfigHash()` uses `JSON.stringify(getConfig())` on the **merged** config; same files + same CLI mode → same hash. |
 | **Platform / hostname** | ✅ Not used | No `os.hostname()`, `os.platform()`, or `process.arch` in media path. |
 
 **Verdict:** Configuration is stable and file-based; no host- or env-dependent media output.

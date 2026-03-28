@@ -61,6 +61,11 @@
 
 **Verdict:** Runs are auditable; renderer choice and clip duration are logged.
 
+### FFmpeg `ffmpeg -version` and binary fingerprint
+
+- **Human-readable / logged version** uses `stdout.trim() || stderr.trim()` because some static builds print the banner on stdout only.
+- **`ffmpegBinaryFingerprint` in metadata** remains **legacy-stable**: the hashed payload is `stderr.trim() + "\n" + buildconf` (not stdout), so fingerprints do not change when only the version stream moves from stderr to stdout on the same binary.
+
 ---
 
 ## 5. Contract and Component Scope

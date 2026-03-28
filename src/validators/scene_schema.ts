@@ -178,6 +178,7 @@ export interface UIFlowPostProduction {
 }
 
 export interface UIFlowPostProductionV16 extends UIFlowPostProduction {
+  /** When true (with Remotion enabled), `narration_concat.wav` may include synthetic silence (`title_card_pad.wav`) before each step's speech to align audio with on-video title cards. */
   useRemotionOverlays?: boolean;
 }
 
@@ -221,6 +222,25 @@ export interface UIFlowSceneContractV16 {
   recording_enhancements: UIFlowRecordingEnhancements;
   post_production: UIFlowPostProductionV16;
   scenes: UIFlowSceneV15[];
+}
+
+/**
+ * Whether per-scene Remotion overlays (SceneTitleCard + ProgressOverlay) run for ui_flow_scenes.
+ * v1.6: contract `post_production.useRemotionOverlays` true/false wins when set; if omitted, uses merged config.
+ * v1.5: uses `config.remotion.useRemotionOverlays` only. Always requires `remotion.enabled`.
+ */
+export function resolveUIFlowSceneRemotionOverlays(params: {
+  contract: UIFlowSceneContractV15 | UIFlowSceneContractV16;
+  remotionEnabled: boolean;
+  configUseRemotionOverlays: boolean | undefined;
+}): boolean {
+  if (!params.remotionEnabled) return false;
+  if (params.contract.schema_version === "1.6") {
+    const flag = params.contract.post_production.useRemotionOverlays;
+    if (flag === true) return true;
+    if (flag === false) return false;
+  }
+  return params.configUseRemotionOverlays === true;
 }
 
 export function validateUIFlowScenesContract(

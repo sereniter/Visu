@@ -911,7 +911,7 @@ export class RemotionAdapter {
 
 ## 10. Config Integration
 
-**File:** `visu/config/default.json`
+**File:** `visu/config/shared.json` *(at time of sprint: `default.json`; see docs/consumer/CONFIG_REFERENCE.md)*
 
 ```json
 {
@@ -1086,7 +1086,7 @@ visu/src/adapters/
   remotion_adapter.ts             ← NEW (async spawn, props validation, sha256, ffprobe check)
 
 visu/config/
-  default.json                    ← remotion block added
+  shared.json                     ← remotion block (was default.json at sprint time)
 
 visu/schemas/
   remotion_props_schema_v1.json   ← NEW: governed props schema per composition

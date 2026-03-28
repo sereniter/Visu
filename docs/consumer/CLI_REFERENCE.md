@@ -2,7 +2,7 @@
 
 Every command Bhairav or OpenClaw will call. Precise and complete; no internals.
 
-**Invocation:** Run from the Visu repo root: `node dist/index.js <command> [args]`. Configuration: VISU reads `config/default.json`. Required fields include **contentRoot** and **outputRoot** (absolute paths to the content repository and output repository). Both must exist at startup. Optional **execution.defaultBackgroundMusicPath** (absolute path to a WAV file): used as default background music for Mode B when the script has no `music` field; if set and the file exists, it is looped/trimmed to the video duration and mixed under narration for the full video (music continues after narration ends). Omit or leave empty for narration-only.
+**Invocation:** Run from the Visu repo root: `node dist/index.js <command> [args]`. **Configuration:** VISU loads **`config/shared.json`** and merges **`config/mode_a.json`**, **`mode_b.json`**, or **`mode_c.json`** depending on the command (see [CONFIG_REFERENCE.md](./CONFIG_REFERENCE.md)). Required fields include **contentRoot** and **outputRoot** (absolute paths to the content repository and output repository). Both must exist at startup when those validators run. For **Mode B** default background music when the script has no `music` field, set **execution.defaultBackgroundMusicPath** in **`mode_b.json`** (absolute path to a WAV); if set and the file exists, it is looped/trimmed to the video duration and mixed under narration for the full video (music continues after narration ends). Omit or leave empty for narration-only.
 
 ---
 
@@ -30,7 +30,7 @@ node dist/index.js --mode <mode> [mode-specific flags] [options]
 | `--strict-determinism` | After a successful run, run an audit and exit non-zero if determinism checks fail (e.g. FFmpeg fingerprint mismatch). |
 | `--expected-ffmpeg-fingerprint <hash>` | Override the expected FFmpeg binary fingerprint for the audit (used with `--strict-determinism` or `visu audit`). |
 
-Mode B background music is controlled by the script `music` field (path relative to contentRoot/{topic}/) or by **config** `execution.defaultBackgroundMusicPath` when the script has no music; the track fills the full video (no silence after narration). See Contract Authoring Guide.
+Mode B background music is controlled by the script `music` field (path relative to contentRoot/{topic}/) or by **`config/mode_b.json`** → `execution.defaultBackgroundMusicPath` when the script has no music; the track fills the full video (no silence after narration). See Contract Authoring Guide.
 
 ### Exit codes
 

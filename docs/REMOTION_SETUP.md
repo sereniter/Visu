@@ -36,7 +36,7 @@ The VISU `RemotionAdapter` validates `logoPath` values against this directory an
 
 ### 4. Config
 
-`config/default.json` contains:
+The Remotion block lives in **`config/shared.json`** (baseline). Mode-specific flags (e.g. `useRemotionOverlays`) may be overridden in **`config/mode_a.json`** / **`mode_c.json`** after merge. See [consumer/CONFIG_REFERENCE.md](./consumer/CONFIG_REFERENCE.md).
 
 ```json
 "remotion": {

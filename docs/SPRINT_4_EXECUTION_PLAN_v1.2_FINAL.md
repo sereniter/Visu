@@ -44,7 +44,7 @@ With locked encoding profile, aligned audio spec, AV drift validation, and deter
 }
 ```
 
-Stored in `config/default.json`. No overrides permitted.
+Stored in `config/shared.json` *(legacy: `config/default.json`)*. Layered mode overlays are documented in `docs/consumer/CONFIG_REFERENCE.md`.
 
 ### Audio Sample Rate Alignment
 

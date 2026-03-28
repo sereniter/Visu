@@ -112,6 +112,11 @@
         "accentColor": {
           "type": "string",
           "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "durationInFrames": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 108000
         }
       }
     }

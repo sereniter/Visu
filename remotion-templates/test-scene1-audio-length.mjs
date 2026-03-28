@@ -15,7 +15,9 @@ const repoRoot = path.resolve(import.meta.dirname, "..");
 const artifactsDir = path.join(repoRoot, "artifacts", runId);
 let defaultContractPath = null;
 try {
-  const configPath = path.join(repoRoot, "config", "default.json");
+  const sharedPath = path.join(repoRoot, "config", "shared.json");
+  const legacyPath = path.join(repoRoot, "config", "default.json");
+  const configPath = fs.existsSync(sharedPath) ? sharedPath : legacyPath;
   const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
   if (config.contentRoot) {
     defaultContractPath = path.join(

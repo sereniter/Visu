@@ -15,7 +15,10 @@ export interface TimelineSceneInput {
   narration_path: string;
   /** Optional scene identifier for logging. */
   scene_id?: string;
-  /** When true, skip AV drift validation for this scene (used by Mode A). */
+  /**
+   * When true, skip **per-row** AV drift here (used by Mode A).
+   * Mode A still enforces narration ≤ stitched video **after** `narration_concat.wav` is built in `ui_flow_scene_engine` (post–WAV concat probe on `stitched_video.mp4`).
+   */
   skip_drift?: boolean;
 }
 

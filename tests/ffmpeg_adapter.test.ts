@@ -159,8 +159,22 @@ describe("parseFfmpegVersion", () => {
     expect(parseFfmpegVersion(stderr)).toBe("6.1.1");
   });
 
+  it("extracts version from stdout-only builds (same line format)", () => {
+    const stdout = "ffmpeg version 7.0-static Copyright (c) 2000-2024...";
+    expect(parseFfmpegVersion(stdout)).toBe("7.0");
+  });
+
+  it("parse input is stdout || stderr, not both concatenated", () => {
+    const onlyStdout = "ffmpeg version 5.2\n";
+    const onlyStderr = "";
+    expect(parseFfmpegVersion(onlyStdout.trim() || onlyStderr.trim())).toBe("5.2");
+    const stderrBanner = "ffmpeg version 6.0-extra\n";
+    expect(parseFfmpegVersion("".trim() || stderrBanner.trim())).toBe("6.0");
+  });
+
   it("returns empty string when no match", () => {
     expect(parseFfmpegVersion("invalid")).toBe("");
+    expect(parseFfmpegVersion("")).toBe("");
   });
 });
 

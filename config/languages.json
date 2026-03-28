@@ -8,16 +8,16 @@
       "nativeModelRate": 22050,
       "voices": {
         "male": {
-          "voice": "en_US-libritts-high",
-          "modelPath": "models/piper/en_US-libritts-high.onnx",
-          "modelConfig": "models/piper/en_US-libritts-high.onnx.json",
-          "modelHash": "0000000000000000000000000000000000000000000000000000000000000000"
+          "voice": "en_US-ryan-high",
+          "modelPath": "models/piper/en_US-ryan-high.onnx",
+          "modelConfig": "models/piper/en_US-ryan-high.onnx.json",
+          "modelHash": "b3990d7606e183ec8dbfba70a4607074f162de1a0c412e0180d1ff60bb154eca"
         },
         "female": {
-          "voice": "en_US-libritts-high-female",
-          "modelPath": "models/piper/en_US-libritts-high-female.onnx",
-          "modelConfig": "models/piper/en_US-libritts-high-female.onnx.json",
-          "modelHash": "0000000000000000000000000000000000000000000000000000000000000000"
+          "voice": "en_US-lessac-high",
+          "modelPath": "models/piper/en_US-lessac-high.onnx",
+          "modelConfig": "models/piper/en_US-lessac-high.onnx.json",
+          "modelHash": "4cabf7c3a638017137f34a1516522032d4fe3f38228a843cc9b764ddcbcd9e09"
         }
       }
     },
@@ -28,16 +28,16 @@
       "nativeModelRate": 22050,
       "voices": {
         "male": {
-          "voice": "hi_IN-high-male",
-          "modelPath": "models/piper/hi_IN-high-male.onnx",
-          "modelConfig": "models/piper/hi_IN-high-male.onnx.json",
-          "modelHash": "0000000000000000000000000000000000000000000000000000000000000000"
+          "voice": "hi_IN-rohan-medium",
+          "modelPath": "models/piper/hi_IN-rohan-medium.onnx",
+          "modelConfig": "models/piper/hi_IN-rohan-medium.onnx.json",
+          "modelHash": "b65dc80fb34d9dcd1cf684cb297966a34983bbc93bb1696fe207f32b0b33a091"
         },
         "female": {
-          "voice": "hi_IN-high-female",
-          "modelPath": "models/piper/hi_IN-high-female.onnx",
-          "modelConfig": "models/piper/hi_IN-high-female.onnx.json",
-          "modelHash": "0000000000000000000000000000000000000000000000000000000000000000"
+          "voice": "hi_IN-priyamvada-medium",
+          "modelPath": "models/piper/hi_IN-priyamvada-medium.onnx",
+          "modelConfig": "models/piper/hi_IN-priyamvada-medium.onnx.json",
+          "modelHash": "aa63bcf2cd493b55a450f280e23cf77f03afc9af7015e6e5acd43b652f166c88"
         }
       }
     },

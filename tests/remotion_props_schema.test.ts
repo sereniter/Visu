@@ -57,6 +57,17 @@ describe("remotion_props_schema", () => {
     expect(result.valid).toBe(true);
   });
 
+  it("accepts ProgressOverlay with optional durationInFrames", () => {
+    const result = validateRemotionProps("ProgressOverlay", {
+      currentStep: 1,
+      totalSteps: 5,
+      language: "en",
+      accentColor: "#FF6B35",
+      durationInFrames: 340,
+    });
+    expect(result.valid).toBe(true);
+  });
+
   it("rejects ProgressOverlay when currentStep < 1", () => {
     const result = validateRemotionProps("ProgressOverlay", {
       currentStep: 0,

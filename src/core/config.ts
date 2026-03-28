@@ -57,18 +57,100 @@ export interface Config {
   };
 }
 
-function loadConfig(): Config {
-  const fromCwd = join(process.cwd(), "config", "default.json");
-  const configPath = existsSync(fromCwd)
-    ? fromCwd
-    : join(dirname(fileURLToPath(import.meta.url)), "..", "..", "config", "default.json");
-  const raw = JSON.parse(readFileSync(configPath, "utf-8")) as Config;
-  const configDir = dirname(configPath);
+/** Mode A (ui_flow, ui_flow_scenes), Mode B (recorded), or Mode C (generative). */
+export type ConfigMode = "a" | "b" | "c";
+
+function isPlainObject(x: unknown): x is Record<string, unknown> {
+  return x !== null && typeof x === "object" && !Array.isArray(x);
+}
+
+/** Deep merge overlay into base (overlay wins). */
+function deepMerge(base: Record<string, unknown>, overlay: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...base };
+  for (const [k, v] of Object.entries(overlay)) {
+    if (v === undefined) continue;
+    if (isPlainObject(v) && isPlainObject(out[k])) {
+      out[k] = deepMerge(out[k] as Record<string, unknown>, v);
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
+function resolveConfigDir(): string {
+  const fromCwd = join(process.cwd(), "config");
+  if (existsSync(fromCwd)) return fromCwd;
+  return join(dirname(fileURLToPath(import.meta.url)), "..", "..", "config");
+}
+
+/**
+ * When set, `getConfig()` merges `config/mode_{a|b|c}.json` onto `config/shared.json`.
+ * CLI sets this before running an engine; utilities (audit, narrate) leave it null (shared only).
+ */
+let activeMode: ConfigMode | null = null;
+
+export function setActiveConfigMode(mode: ConfigMode | null): void {
+  activeMode = mode;
+  cached = null;
+}
+
+export function getActiveConfigMode(): ConfigMode | null {
+  return activeMode;
+}
+
+function normalizeConfigPaths(raw: Config, configDir: string): Config {
+  let execution = { ...raw.execution };
+  if (
+    execution.defaultBackgroundMusicPath &&
+    !execution.defaultBackgroundMusicPath.startsWith("/")
+  ) {
+    execution = {
+      ...execution,
+      defaultBackgroundMusicPath: resolve(configDir, execution.defaultBackgroundMusicPath),
+    };
+  }
+
   return {
     ...raw,
     contentRoot: raw.contentRoot.startsWith("/") ? raw.contentRoot : resolve(configDir, raw.contentRoot),
     outputRoot: raw.outputRoot.startsWith("/") ? raw.outputRoot : resolve(configDir, raw.outputRoot),
+    execution,
   };
+}
+
+function loadConfig(): Config {
+  const configDir = resolveConfigDir();
+
+  const sharedPath = join(configDir, "shared.json");
+  const legacyPath = join(configDir, "default.json");
+
+  let baseRecord: Record<string, unknown>;
+  let applyModeOverlay: boolean;
+
+  if (existsSync(sharedPath)) {
+    baseRecord = JSON.parse(readFileSync(sharedPath, "utf-8")) as Record<string, unknown>;
+    applyModeOverlay = true;
+  } else if (existsSync(legacyPath)) {
+    baseRecord = JSON.parse(readFileSync(legacyPath, "utf-8")) as Record<string, unknown>;
+    applyModeOverlay = false;
+  } else {
+    throw new Error(
+      `Visu config not found: expected ${sharedPath} (preferred) or legacy ${legacyPath}`,
+    );
+  }
+
+  let merged = baseRecord;
+  if (applyModeOverlay && activeMode !== null) {
+    const modePath = join(configDir, `mode_${activeMode}.json`);
+    if (existsSync(modePath)) {
+      const overlay = JSON.parse(readFileSync(modePath, "utf-8")) as Record<string, unknown>;
+      merged = deepMerge(baseRecord, overlay);
+    }
+  }
+
+  const raw = merged as unknown as Config;
+  return normalizeConfigPaths(raw, configDir);
 }
 
 let cached: Config | null = null;
@@ -78,9 +160,12 @@ export function getConfig(): Config {
   return cached;
 }
 
-/** Test only: override config cache. Call with null to reset. */
+/** Test only: override config cache. Call with null to reset reload from disk and clear {@link setActiveConfigMode}. */
 export function setConfigForTest(config: Config | null): void {
   cached = config;
+  if (config === null) {
+    activeMode = null;
+  }
 }
 
 /** Timeout for each action; never hardcode 10000 in code. */
@@ -117,6 +202,7 @@ export function getRemotionConfig():
       templatesRoot: string;
       accentColor: string;
       enabled: boolean;
+      useRemotionOverlays?: boolean;
     }
   | null {
   const cfg = getConfig();

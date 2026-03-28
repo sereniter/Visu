@@ -18,6 +18,13 @@ export type RemotionRenderOptions = {
   audioPath?: string;
 };
 
+/** PNG frame sequence from Remotion (no FFmpeg stitch). Used when alpha must be composited over scene video in Visu. */
+export type RemotionPngSequenceResult = {
+  framesDir: string;
+  framePattern: string;
+  fps: number;
+};
+
 export type RemotionTransitionRenderParams = {
   contract: { scenes: Array<{ scene_id: string; duration_sec: number; transition?: { type?: string; duration_sec?: number } }> };
   fontsConfig: Record<string, unknown>;
@@ -310,6 +317,106 @@ export class RemotionAdapter {
     }
 
     return outputPath;
+  }
+
+  /**
+   * Render a PNG frame sequence only (no Stage 2 stitch). Use for ProgressOverlay so FFmpeg can composite
+   * RGBA frames over scene video without flattening transparency to black.
+   */
+  async renderPngSequence(options: {
+    compositionId: "ProgressOverlay";
+    props: Record<string, unknown>;
+    /** Base path without extension; creates `${base}_props.json` and `${base}_frames/`. */
+    outputBasePath: string;
+    durationInFrames: number;
+    runId?: string;
+  }): Promise<RemotionPngSequenceResult> {
+    const { compositionId, props, outputBasePath, durationInFrames, runId } = options;
+    this.assertTemplatesRootExists();
+
+    const remotionConfig = getRemotionConfig();
+    if (remotionConfig && remotionConfig.enabled === false) {
+      throw new Error("REMOTION_DISABLED: remotion.enabled is false in config");
+    }
+
+    const bundlerEnv = {
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      remotionConfigHash: RemotionAdapter.hashFileIfExists(
+        join(this.templatesRoot, "remotion.config.ts"),
+      ),
+      packageJsonHash: RemotionAdapter.hashFileIfExists(
+        join(this.templatesRoot, "package.json"),
+      ),
+    };
+    this.logger.log("remotion_bundler_env", { payload: { ...bundlerEnv, stage: "png_sequence" } });
+
+    const propsFile = outputBasePath + "_props.json";
+    const propsForRender = { ...props, durationInFrames };
+    writeFileSync(propsFile, JSON.stringify(propsForRender, null, 2), "utf-8");
+
+    const fps = (props.fps as number) ?? 30;
+    const framesDir = resolve(outputBasePath + "_frames");
+    mkdirSync(framesDir, { recursive: true });
+
+    const renderArgs = [
+      "npx", "remotion", "render",
+      "src/index.ts",
+      compositionId,
+      `--props=${propsFile}`,
+      "--image-format=png",
+      "--sequence",
+      `--output=${framesDir}`,
+      "--overwrite",
+      "--log=verbose",
+      ...(durationInFrames > 0 ? [`--frames=0-${durationInFrames - 1}`] : []),
+    ].join(" ");
+
+    this.logger.log("remotion_spawn", {
+      payload: { templatesRoot: this.templatesRoot, stage: "png_sequence", command: renderArgs },
+    });
+
+    try {
+      execSync(renderArgs, {
+        cwd: this.templatesRoot,
+        env: { ...process.env, NODE_ENV: "production" },
+        stdio: "pipe",
+        maxBuffer: 50 * 1024 * 1024,
+      });
+    } catch (err: unknown) {
+      const e = err as { stderr?: Buffer; status?: number };
+      const stderr = e.stderr?.toString().slice(-2000) ?? "";
+      this.logger.log("remotion_stderr", {
+        payload: { compositionId, data: stderr },
+      });
+      throw new Error(
+        `REMOTION_RENDER_FAILED: PNG sequence render failed for ${compositionId} (exit ${e.status}): ${stderr.slice(-500)}`,
+      );
+    }
+
+    try {
+      rmSync(propsFile, { force: true });
+    } catch {
+      /* best effort */
+    }
+
+    const frameFiles = readdirSync(framesDir).filter((f: string) => f.endsWith(".png")).sort();
+    if (frameFiles.length === 0) {
+      throw new Error(`REMOTION_RENDER_FAILED: No PNG frames produced for ${compositionId}`);
+    }
+
+    const first = frameFiles[0] ?? "";
+    const match = first.match(/^(.+?)(\d+)(\.png)$/);
+    const framePattern = match
+      ? `${match[1]}%0${match[2].length}d${match[3]}`
+      : "element-%04d.png";
+
+    this.logger.log("remotion_png_sequence_complete", {
+      payload: { compositionId, frameCount: frameFiles.length, runId: runId ?? null },
+    });
+
+    return { framesDir, framePattern, fps };
   }
 
   async renderIntro(params: {

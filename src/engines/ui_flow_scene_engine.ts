@@ -8,7 +8,8 @@ import { join, resolve } from "node:path";
 import { chromium, type Page } from "playwright";
 import { copyFile, unlink } from "node:fs/promises";
 import type { RunContext } from "../core/run_context.js";
-import { getConfig } from "../core/config.js";
+import { validateAvDrift } from "../validators/av_drift_validator.js";
+import { getConfig, getEncodingProfile, type EncodingProfile } from "../core/config.js";
 import type { FFmpegAdapterInterface } from "../adapters/ffmpeg_adapter.js";
 import { runFfmpeg, parseFfmpegVersion } from "../adapters/ffmpeg_adapter.js";
 import { getWavDurationMs } from "../core/wav_utils.js";
@@ -16,6 +17,7 @@ import { getVoiceConfig, getVoiceModelPaths } from "../core/language_config.js";
 import { LocalPiperAdapter } from "../adapters/tts/local_piper_adapter.js";
 import {
   validateUIFlowScenesContract,
+  resolveUIFlowSceneRemotionOverlays,
   type UIFlowSceneContractV15,
   type UIFlowSceneContractV16,
   type UIFlowSceneStep,
@@ -28,7 +30,6 @@ import { runTimeline } from "./timeline_engine.js";
 import { runWavConcat } from "./wav_concat_engine.js";
 import { runAvMerge } from "./av_merge_engine.js";
 import { buildTranscodeArgs } from "../adapters/ffmpeg_adapter.js";
-import { getEncodingProfile } from "../core/config.js";
 import { startSoundsServer } from "../core/sounds_server.js";
 import {
   applyTitleCardAndProgress,
@@ -51,29 +52,167 @@ const SCENE_FPS = 30;
 // Must match Remotion SceneTitleCard durationInFrames (see remotion-templates/src/Root.tsx).
 const TITLE_CARD_FRAMES = 60;
 
-async function compositeOverlay(params: {
+/** Same duration as Remotion SceneTitleCard when using engine defaults. */
+export function getUiFlowTitleCardPadDurationSec(): number {
+  return TITLE_CARD_FRAMES / SCENE_FPS;
+}
+
+/**
+ * Builds WAV paths for `runWavConcat`: intro, per-scene speech (+ optional transition + title-card pad when overlays on), summary.
+ * With overlays: order at each boundary is transition → pad → scene narration (Option A).
+ */
+export function buildUiFlowNarrationWavPaths(params: {
+  narrationPaths: string[];
+  transitionPath: string | null;
+  useRemotionOverlays: boolean;
+  titleCardPadPath: string | null;
+}): string[] {
+  const { narrationPaths, transitionPath, useRemotionOverlays, titleCardPadPath } = params;
+  const hasTransition = Boolean(transitionPath);
+
+  if (useRemotionOverlays && titleCardPadPath) {
+    const out: string[] = [narrationPaths[0]!];
+    const sceneCount = narrationPaths.length - 2;
+    for (let si = 0; si < sceneCount; si++) {
+      if (hasTransition) out.push(transitionPath!);
+      out.push(titleCardPadPath);
+      out.push(narrationPaths[si + 1]!);
+    }
+    if (hasTransition) out.push(transitionPath!);
+    out.push(narrationPaths[narrationPaths.length - 1]!);
+    return out;
+  }
+
+  if (hasTransition) {
+    const out: string[] = [];
+    for (let i = 0; i < narrationPaths.length; i++) {
+      out.push(narrationPaths[i]!);
+      if (i < narrationPaths.length - 1) out.push(transitionPath!);
+    }
+    return out;
+  }
+
+  return [...narrationPaths];
+}
+
+/** Composite RGBA PNG sequence over scene video; optionally keep scene muxed narration (stream 0:a). */
+async function compositeProgressOverlayFromPngSequence(params: {
   sceneClipPath: string;
-  overlayClipPath: string;
+  framesDir: string;
+  framePattern: string;
+  fps: number;
   outputPath: string;
   ffmpegPath: string;
+  muxSceneAudio: boolean;
+  profile: EncodingProfile;
 }): Promise<void> {
-  const { sceneClipPath, overlayClipPath, outputPath, ffmpegPath } = params;
-  await runFfmpeg(ffmpegPath, [
-    "-i", sceneClipPath,
-    "-i", overlayClipPath,
-    "-filter_complex", "[0:v][1:v]overlay=0:0:shortest=1[outv]",
+  const overlayInput = join(params.framesDir, params.framePattern);
+  const fc =
+    `[1:v]format=rgba,scale=1920:1080:flags=bicubic,setpts=PTS-STARTPTS[ovr];` +
+    `[0:v][ovr]overlay=0:0:shortest=1[outv]`;
+  const args: string[] = [
+    "-y",
+    "-i", params.sceneClipPath,
+    "-framerate", String(params.fps),
+    "-start_number", "0",
+    "-i", overlayInput,
+    "-filter_complex", fc,
     "-map", "[outv]",
-    "-an",
-    "-c:v", "libx264",
-    "-crf", "18",
-    "-preset", "medium",
-    "-profile:v", "high",
-    "-pix_fmt", "yuv420p",
-    "-r", String(SCENE_FPS),
+  ];
+  if (params.muxSceneAudio) {
+    args.push(
+      "-map", "0:a:0",
+      "-c:a", params.profile.audio_codec,
+      "-ar", String(params.profile.audio_sample_rate),
+    );
+  } else {
+    args.push("-an");
+  }
+  args.push(
+    "-c:v", params.profile.video_codec,
+    "-preset", params.profile.preset,
+    "-profile:v", params.profile.profile,
+    "-pix_fmt", params.profile.pix_fmt,
+    "-crf", String(params.profile.crf),
+    "-r", String(params.fps),
     "-map_metadata", "-1",
     "-movflags", "+faststart",
-    outputPath,
+    params.outputPath,
+  );
+  await runFfmpeg(params.ffmpegPath, args);
+}
+
+/**
+ * Add a stereo silent AAC track so concat demuxer matches scene clips that carry muxed narration.
+ * AAC sample rate / layout must stay aligned with `getEncodingProfile`; change both together if the profile changes.
+ */
+async function muxSilentStereoAudio(params: {
+  videoPath: string;
+  outputPath: string;
+  ffmpegPath: string;
+  durationMs: number;
+  profile: EncodingProfile;
+}): Promise<void> {
+  const sec = Math.max(0.001, params.durationMs / 1000);
+  const durStr = sec.toFixed(3);
+  await runFfmpeg(params.ffmpegPath, [
+    "-y",
+    "-i", params.videoPath,
+    "-f", "lavfi",
+    "-i", `anullsrc=channel_layout=stereo:sample_rate=${params.profile.audio_sample_rate}`,
+    "-filter_complex", `[1:a]atrim=duration=${durStr},asetpts=PTS-STARTPTS[aout]`,
+    "-map", "0:v:0",
+    "-map", "[aout]",
+    "-c:v", "copy",
+    "-c:a", params.profile.audio_codec,
+    "-ar", String(params.profile.audio_sample_rate),
+    "-movflags", "+faststart",
+    "-map_metadata", "-1",
+    params.outputPath,
   ]);
+}
+
+async function generateTitleCardSilenceWav(params: {
+  outputPath: string;
+  ffmpegPath: string;
+  durationSec: number;
+  profile: EncodingProfile;
+}): Promise<void> {
+  const sr = params.profile.audio_sample_rate;
+  // Mono to match Piper/TTS narration WAVs; runWavConcat requires identical channel count across inputs.
+  await runFfmpeg(params.ffmpegPath, [
+    "-y",
+    "-f",
+    "lavfi",
+    "-i",
+    `anullsrc=channel_layout=mono:sample_rate=${sr}`,
+    "-t",
+    String(params.durationSec),
+    "-acodec",
+    "pcm_s16le",
+    params.outputPath,
+  ]);
+}
+
+/** If clip has no audio, mux silent AAC (profile-aligned) for timeline concat; otherwise return the same path. */
+export async function normalizeTimelineSegmentVideoForConcat(params: {
+  videoPath: string;
+  outputPath: string;
+  adapter: FFmpegAdapterInterface;
+  profile: EncodingProfile;
+}): Promise<string> {
+  const probe = await ffprobeRemotionOutput(params.adapter.getFfprobePath(), params.videoPath);
+  const hasAudio = probe.streams.some((s) => s.codec_type === "audio");
+  if (hasAudio) return params.videoPath;
+  const durationMs = (await params.adapter.getVideoStreamInfo(params.videoPath)).durationMs;
+  await muxSilentStereoAudio({
+    videoPath: params.videoPath,
+    outputPath: params.outputPath,
+    ffmpegPath: params.adapter.getFfmpegPath(),
+    durationMs,
+    profile: params.profile,
+  });
+  return params.outputPath;
 }
 
 async function concatDemuxer(params: {
@@ -531,10 +670,22 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
 
     const remotionConfig = config.remotion ?? { enabled: false };
     const contractSchemaIsV16 = (contract as UIFlowSceneContractV16).schema_version === "1.6";
-    // For now, disable per-scene Remotion overlays in Mode A to ensure stitched
-    // videos use the high-fidelity scene_*_final.mp4 clips (which already include
-    // browser video and mixed audio). This avoids black/overlay-only segments.
-    const resolvedUseRemotionOverlays = false;
+
+    let remotionAdapter: RemotionAdapter | null = null;
+    if (remotionConfig.enabled) {
+      remotionAdapter = new RemotionAdapter(remotionConfig.templatesRoot, logger);
+    }
+
+    const resolvedUseRemotionOverlays = resolveUIFlowSceneRemotionOverlays({
+      contract,
+      remotionEnabled: remotionConfig.enabled === true,
+      configUseRemotionOverlays: config.remotion?.useRemotionOverlays,
+    });
+    if (resolvedUseRemotionOverlays && !remotionAdapter) {
+      throw new Error(
+        "REMOTION_REQUIRED: Remotion overlays are enabled (contract or config) but remotion.enabled is false in config.",
+      );
+    }
 
     const introRenderer: "png" | "remotion" =
       contractSchemaIsV16 && (contract as UIFlowSceneContractV16).intro.renderer === "remotion"
@@ -552,11 +703,6 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
         useRemotionOverlays: resolvedUseRemotionOverlays,
       },
     });
-
-    let remotionAdapter: RemotionAdapter | null = null;
-    if (remotionConfig.enabled) {
-      remotionAdapter = new RemotionAdapter(remotionConfig.templatesRoot, logger);
-    }
 
     const registryResult = validateLanguageRegistry(process.cwd());
     if (!registryResult.valid) {
@@ -680,38 +826,46 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
         if (resolvedUseRemotionOverlays && remotionAdapter) {
           try {
             const sceneInfo = await adapter.getVideoStreamInfo(result.videoPath);
-            const sceneDurationFrames = Math.round((sceneInfo.durationMs / 1000) * SCENE_FPS);
+            const sceneDurationFrames = Math.max(1, Math.round((sceneInfo.durationMs / 1000) * SCENE_FPS));
             const accentColor = config.remotion?.accentColor ?? "#FF6B35";
+            const profile = getEncodingProfile();
 
-            const overlayPath = join(outputDir, `scene_${scene.scene_id}_progress_overlay.mp4`);
-            await remotionAdapter.render({
+            const sceneProbe = await ffprobeRemotionOutput(adapter.getFfprobePath(), result.videoPath);
+            const muxSceneAudio = sceneProbe.streams.some((s) => s.codec_type === "audio");
+
+            const seqBase = join(outputDir, `scene_${scene.scene_id}_progress_overlay`);
+            const { framesDir, framePattern, fps: overlayFps } = await remotionAdapter.renderPngSequence({
               compositionId: "ProgressOverlay",
               props: {
                 currentStep: i + 1,
                 totalSteps: contract.scenes.length,
                 language: contract.language,
                 accentColor,
+                durationInFrames: sceneDurationFrames,
               },
-              outputPath: overlayPath,
+              outputBasePath: seqBase,
               durationInFrames: sceneDurationFrames,
+              runId: context.runId,
             });
 
             const sceneWithOverlayPath = join(outputDir, `scene_${scene.scene_id}_with_overlay.mp4`);
-            await compositeOverlay({
+            await compositeProgressOverlayFromPngSequence({
               sceneClipPath: result.videoPath,
-              overlayClipPath: overlayPath,
+              framesDir,
+              framePattern,
+              fps: overlayFps,
               outputPath: sceneWithOverlayPath,
               ffmpegPath: adapter.getFfmpegPath(),
+              muxSceneAudio,
+              profile,
             });
 
             const compositeInfo = await adapter.getVideoStreamInfo(sceneWithOverlayPath);
-            // Reuse Sprint 12 Remotion probe validation to ensure full profile parity,
-            // including time_base, color_space, color_range, and absence of audio streams.
             const compositeProbe = await ffprobeRemotionOutput(
               adapter.getFfprobePath(),
               sceneWithOverlayPath,
             );
-            validateRemotionProbe(compositeProbe);
+            validateRemotionProbe(compositeProbe, { expectAudio: muxSceneAudio });
             if (
               compositeInfo.width !== 1920 ||
               compositeInfo.height !== 1080 ||
@@ -749,9 +903,18 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
               );
             }
 
+            const titleWithAudioPath = join(outputDir, `scene_${scene.scene_id}_title_card_aac.mp4`);
+            await muxSilentStereoAudio({
+              videoPath: titleCardPath,
+              outputPath: titleWithAudioPath,
+              ffmpegPath: adapter.getFfmpegPath(),
+              durationMs: titleInfo.durationMs,
+              profile,
+            });
+
             const finalSceneClipPath = join(outputDir, `scene_${scene.scene_id}_overlay_final.mp4`);
             await concatDemuxer({
-              clipPaths: [titleCardPath, sceneWithOverlayPath],
+              clipPaths: [titleWithAudioPath, sceneWithOverlayPath],
               outputPath: finalSceneClipPath,
               ffmpegPath: adapter.getFfmpegPath(),
               outputDir,
@@ -845,8 +1008,27 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
       skip_drift: true,
     });
 
+    const encodingProfile = getEncodingProfile();
+    const scenesForTimeline = await (async () => {
+      const out: typeof timelineScenes = [];
+      for (let idx = 0; idx < timelineScenes.length; idx++) {
+        const s = timelineScenes[idx]!;
+        const sid = s.scene_id ?? `segment_${idx}`;
+        const safeId = sid.replace(/[^a-zA-Z0-9_-]/g, "_");
+        const outNorm = join(outputDir, `${idx}_${safeId}_timeline_norm.mp4`);
+        const video_path = await normalizeTimelineSegmentVideoForConcat({
+          videoPath: s.video_path,
+          outputPath: outNorm,
+          adapter,
+          profile: encodingProfile,
+        });
+        out.push({ ...s, video_path });
+      }
+      return out;
+    })();
+
     const timelineResult = await runTimeline({
-      scenes: timelineScenes,
+      scenes: scenesForTimeline,
       outputDir,
       adapter,
       logger,
@@ -904,20 +1086,49 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
 
     const narrationPaths = timelineScenes.map((s) => s.narration_path);
     const transitionPath = join(process.cwd(), "assets", "sounds", "transition.wav");
-    let wavPaths = narrationPaths;
-    if (contract.post_production.transitionSound && existsSync(transitionPath)) {
-      wavPaths = [];
-      for (let i = 0; i < narrationPaths.length; i++) {
-        wavPaths.push(narrationPaths[i]!);
-        if (i < narrationPaths.length - 1) wavPaths.push(transitionPath);
-      }
+    const transitionFile =
+      contract.post_production.transitionSound && existsSync(transitionPath) ? transitionPath : null;
+
+    let titleCardPadPath: string | null = null;
+    if (resolvedUseRemotionOverlays) {
+      titleCardPadPath = join(outputDir, "title_card_pad.wav");
+      await generateTitleCardSilenceWav({
+        outputPath: titleCardPadPath,
+        ffmpegPath: adapter.getFfmpegPath(),
+        durationSec: getUiFlowTitleCardPadDurationSec(),
+        profile: encodingProfile,
+      });
     }
+
+    const wavPaths = buildUiFlowNarrationWavPaths({
+      narrationPaths,
+      transitionPath: transitionFile,
+      useRemotionOverlays: resolvedUseRemotionOverlays,
+      titleCardPadPath,
+    });
     const narrationConcatPath = join(outputDir, "narration_concat.wav");
     await runWavConcat({
       wavPaths,
       outputPath: narrationConcatPath,
       ffmpegPath: adapter.getFfmpegPath(),
     });
+
+    const stitchedProbeMs = (await adapter.getVideoStreamInfo(timelineResult.stitchedVideoPath)).durationMs;
+    const narrationConcatMs = getWavDurationMs(narrationConcatPath);
+    const driftGate = validateAvDrift(stitchedProbeMs, narrationConcatMs, { maxDriftMs: null });
+    if (!driftGate.valid) {
+      if (process.env.VISU_UI_FLOW_SCENES_DRIFT_SOFT === "1") {
+        logger.log("ui_flow_scenes_drift_soft", {
+          payload: {
+            error: driftGate.error,
+            videoDurationMs: stitchedProbeMs,
+            narrationDurationMs: narrationConcatMs,
+          },
+        });
+      } else {
+        throw new Error(`UI_FLOW_SCENES_AV_DRIFT: ${driftGate.error ?? "narration longer than stitched video"}`);
+      }
+    }
 
     const firstScene = contract.scenes[0];
     const primaryVoiceConfig = firstScene

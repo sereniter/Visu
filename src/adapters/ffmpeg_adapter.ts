@@ -131,12 +131,22 @@ export function parseFfmpegVersion(stderr: string): string {
  * Run ffmpeg -version and -buildconf; return full version stderr, buildconf stdout, and fingerprint.
  * Fingerprint = SHA256(versionOutput + buildconfOutput). Throws on failure.
  */
+/**
+ * FFmpeg `-version` output is stderr on some builds and stdout on others (e.g. static builds).
+ * `versionFull` uses stdout || stderr for logging and parseFfmpegVersion.
+ * Fingerprint stays legacy: only stderr is hashed with buildconf so audit/replay hashes remain stable
+ * when the same binary moved from stderr-only to stdout-only output.
+ */
 export function getFfmpegVersionBuildconfAndFingerprint(
   ffmpegPath: string
 ): Promise<{ versionFull: string; buildconf: string; fingerprint: string }> {
   return new Promise((resolve, reject) => {
     const proc = spawn(ffmpegPath, ["-version"], { stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
     let stderr = "";
+    proc.stdout?.on("data", (chunk: Buffer) => {
+      stdout += chunk.toString();
+    });
     proc.stderr?.on("data", (chunk: Buffer) => {
       stderr += chunk.toString();
     });
@@ -145,7 +155,8 @@ export function getFfmpegVersionBuildconfAndFingerprint(
         reject(new Error(`ffmpeg -version exited ${code}`));
         return;
       }
-      const versionFull = stderr.trim();
+      const versionFull = stdout.trim() || stderr.trim();
+      const versionForFingerprint = stderr.trim();
       const proc2 = spawn(ffmpegPath, ["-buildconf"], { stdio: ["ignore", "pipe", "pipe"] });
       let out = "";
       proc2.stdout?.on("data", (chunk: Buffer) => {
@@ -160,7 +171,7 @@ export function getFfmpegVersionBuildconfAndFingerprint(
           return;
         }
         const buildconf = out.trim();
-        const concatenated = versionFull + "\n" + buildconf;
+        const concatenated = versionForFingerprint + "\n" + buildconf;
         const fingerprint = createHash("sha256").update(concatenated, "utf8").digest("hex");
         resolve({ versionFull, buildconf, fingerprint });
       });
@@ -176,14 +187,20 @@ export function getFfmpegVersionBuildconfAndFingerprint(
 export function checkFfmpegVersion(ffmpegPath: string): Promise<{ version: string }> {
   return new Promise((resolve, reject) => {
     const proc = spawn(ffmpegPath, ["-version"], { stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
     let stderr = "";
+    proc.stdout?.on("data", (chunk: Buffer) => {
+      stdout += chunk.toString();
+    });
     proc.stderr?.on("data", (chunk: Buffer) => {
       stderr += chunk.toString();
     });
     proc.on("close", (code) => {
-      const version = parseFfmpegVersion(stderr);
+      const combined = stdout.trim() || stderr.trim();
+      const version = parseFfmpegVersion(combined);
       if (code !== 0 || !version) {
-        reject(new Error(`FFmpeg not available or version check failed: ${stderr.slice(0, 200)}`));
+        const detail = (stdout + stderr).trim().slice(0, 200);
+        reject(new Error(`FFmpeg not available or version check failed: ${detail}`));
         return;
       }
       const major = parseInt(version.split(".")[0] ?? "0", 10);

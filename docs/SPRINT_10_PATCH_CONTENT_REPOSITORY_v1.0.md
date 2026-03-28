@@ -16,7 +16,7 @@ VISU is integrated with a shared content repository. All run modes read inputs f
 
 ## Files Changed
 
-- **config/default.json** — `contentRoot`, `outputRoot` added
+- **config/default.json** *(today: `config/shared.json`; see docs/consumer/CONFIG_REFERENCE.md)* — `contentRoot`, `outputRoot` added
 - **schemas/config_schema_v1.json** — new; required contentRoot, outputRoot
 - **schemas/scene_schema_v1.4.json** — new; topic, language required; topic pattern no path separators
 - **src/core/config.ts** — contentRoot, outputRoot on Config; `setConfigForTest` for tests

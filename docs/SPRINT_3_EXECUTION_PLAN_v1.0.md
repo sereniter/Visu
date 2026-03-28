@@ -46,7 +46,7 @@ Core must NOT import any vendor or CLI-specific code.
 
 ## 3.2 Config Extension
 
-Update config/default.json:
+Update `config/shared.json` *(was `config/default.json`; see docs/consumer/CONFIG_REFERENCE.md):*
 
 { "tts": { "provider": "local_piper", "defaultVoice": "te",
 "speechRate": 0.95, "sampleRate": 48000, "outputFormat": "wav" } }

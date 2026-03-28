@@ -301,7 +301,7 @@ When experiment mode is disabled (default and only state in Sprint 3):
 Given:
 
 - Identical script JSON (including `text` and `version`).
-- Identical `config/default.json` (`tts` and `execution` blocks).
+- Identical effective config for `tts` and `execution` *(today: `config/shared.json` + mode overlay as applicable; see docs/consumer/CONFIG_REFERENCE.md).*
 - Identical runtime environment (Node version, Piper binary, model files).
 
 The system MUST produce:

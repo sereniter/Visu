@@ -7,11 +7,11 @@ VISU is a deterministic video and narration engine. It supports multiple **modes
 ## Prerequisites
 
 - **Node.js** (project runs from Visu repo root).
-- **Config**: `config/default.json` in the Visu repo. Key settings:
+- **Config**: Layered JSON under `config/` — baseline **`config/shared.json`** plus **`config/mode_a.json`**, **`mode_b.json`**, or **`mode_c.json`** merged by mode when you run an engine (`ui_flow` / `ui_flow_scenes` → A, `recorded` → B, `generative` / `resume` / `add-audio` → C). Narrate and utility commands use **shared only**. If `shared.json` is absent, legacy **`config/default.json`** is loaded alone (no mode merge). See **[docs/consumer/CONFIG_REFERENCE.md](docs/consumer/CONFIG_REFERENCE.md)**.
   - **contentRoot** – Where input content lives (e.g. contracts, topic folders, scripts). Paths passed to Visu are **relative to contentRoot** unless noted.
   - **outputRoot** – Where final deliverables are copied (e.g. `final.mp4`, `media_metadata.json`). Format: `outputRoot/{topic}/{language}/`.
   - **execution.artifactsDir** – Run artifacts (intermediate and final files) go under `{cwd}/{artifactsDir}/{runId}/` (default `artifacts`).
-- **Run from Visu root** so `config/default.json` and `dist/` are found:
+- **Run from Visu root** so `config/` and `dist/` are found:
   ```bash
   cd /path/to/Visu
   node dist/index.js --mode <mode> ...
@@ -197,6 +197,7 @@ This section addresses contract authoring, exit codes, timeouts, and language/vo
 |----------|----------|
 | **CONTRACT_AUTHORING_GUIDE.md** | Mode A/B/C contract authoring, required fields, examples, script templates, wrap contracts. |
 | **CLI_REFERENCE.md** | All commands, flags, and options (invoke as `node dist/index.js ...` from Visu root). |
+| **CONFIG_REFERENCE.md** | Layered config: `shared.json`, `mode_a.json` / `mode_b.json` / `mode_c.json`, legacy `default.json`. |
 | **ERROR_REFERENCE.md** | Exit codes, error catalogue, how to read the structured log, partial-artifact detection. |
 | **ARTIFACT_REFERENCE.md** | Artifact layout, `media_metadata.json` fields, what to read for success/failure. |
 | **SCHEMA_REFERENCE.md** | Schema locations and versions. |

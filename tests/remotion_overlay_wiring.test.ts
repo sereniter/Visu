@@ -4,9 +4,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  resolveUIFlowSceneRemotionOverlays,
+  type UIFlowSceneContractV15,
+  type UIFlowSceneContractV16,
+} from "../src/validators/scene_schema.js";
 
 const SCENE_FPS = 30;
-const TITLE_CARD_FRAMES = 90;
+/** Must match ui_flow_scene_engine TITLE_CARD_FRAMES / Remotion Root SceneTitleCard. */
+const TITLE_CARD_FRAMES = 60;
 
 function mockVideoStreamInfo(overrides: Partial<{
   durationMs: number;
@@ -113,6 +119,75 @@ describe("remotion_overlay_wiring", () => {
     });
   });
 
+  describe("resolveUIFlowSceneRemotionOverlays", () => {
+    it("returns false when remotion is disabled", () => {
+      expect(
+        resolveUIFlowSceneRemotionOverlays({
+          contract: { schema_version: "1.5" } as UIFlowSceneContractV15,
+          remotionEnabled: false,
+          configUseRemotionOverlays: true,
+        }),
+      ).toBe(false);
+    });
+
+    it("v1.5: uses config flag when remotion enabled", () => {
+      const c = { schema_version: "1.5" } as UIFlowSceneContractV15;
+      expect(
+        resolveUIFlowSceneRemotionOverlays({
+          contract: c,
+          remotionEnabled: true,
+          configUseRemotionOverlays: true,
+        }),
+      ).toBe(true);
+      expect(
+        resolveUIFlowSceneRemotionOverlays({
+          contract: c,
+          remotionEnabled: true,
+          configUseRemotionOverlays: false,
+        }),
+      ).toBe(false);
+    });
+
+    it("v1.6: explicit false wins over config true", () => {
+      expect(
+        resolveUIFlowSceneRemotionOverlays({
+          contract: {
+            schema_version: "1.6",
+            post_production: { useRemotionOverlays: false },
+          } as UIFlowSceneContractV16,
+          remotionEnabled: true,
+          configUseRemotionOverlays: true,
+        }),
+      ).toBe(false);
+    });
+
+    it("v1.6: explicit true enables overlays", () => {
+      expect(
+        resolveUIFlowSceneRemotionOverlays({
+          contract: {
+            schema_version: "1.6",
+            post_production: { useRemotionOverlays: true },
+          } as UIFlowSceneContractV16,
+          remotionEnabled: true,
+          configUseRemotionOverlays: false,
+        }),
+      ).toBe(true);
+    });
+
+    it("v1.6: omitted uses config", () => {
+      expect(
+        resolveUIFlowSceneRemotionOverlays({
+          contract: {
+            schema_version: "1.6",
+            post_production: {},
+          } as UIFlowSceneContractV16,
+          remotionEnabled: true,
+          configUseRemotionOverlays: true,
+        }),
+      ).toBe(true);
+    });
+  });
+
   describe("failure propagation", () => {
     it("wraps adapter render failure in REMOTION_OVERLAY_FAILED", async () => {
       const adapter = createMockRemotionAdapter();
@@ -173,9 +248,9 @@ describe("remotion_overlay_wiring", () => {
   });
 
   describe("duration and frame counts", () => {
-    it("title card duration is exactly TITLE_CARD_FRAMES (90 = 3s @ 30fps)", () => {
-      expect(TITLE_CARD_FRAMES).toBe(90);
-      expect(TITLE_CARD_FRAMES / SCENE_FPS).toBe(3);
+    it("title card duration is exactly TITLE_CARD_FRAMES (60 = 2s @ 30fps)", () => {
+      expect(TITLE_CARD_FRAMES).toBe(60);
+      expect(TITLE_CARD_FRAMES / SCENE_FPS).toBe(2);
     });
 
     it("overlay duration matches scene duration in frames", () => {
@@ -188,7 +263,7 @@ describe("remotion_overlay_wiring", () => {
       const sceneDurationMs = 5000;
       const sceneDurationFrames = Math.round((sceneDurationMs / 1000) * SCENE_FPS);
       const finalFrames = TITLE_CARD_FRAMES + sceneDurationFrames;
-      expect(finalFrames).toBe(90 + 150);
+      expect(finalFrames).toBe(60 + 150);
     });
 
     it("handles short scene (< 1s) without negative frame ranges", () => {
@@ -197,7 +272,7 @@ describe("remotion_overlay_wiring", () => {
       expect(sceneDurationFrames).toBe(15);
       expect(sceneDurationFrames).toBeGreaterThan(0);
       const finalFrames = TITLE_CARD_FRAMES + sceneDurationFrames;
-      expect(finalFrames).toBe(105);
+      expect(finalFrames).toBe(75);
     });
   });
 
@@ -278,8 +353,8 @@ describe("remotion_overlay_wiring", () => {
         finalFrames: TITLE_CARD_FRAMES + sceneDurationFrames,
       };
 
-      expect(logEntry.finalFrames).toBe(240);
-      expect(logEntry.titleFrames).toBe(90);
+      expect(logEntry.finalFrames).toBe(210);
+      expect(logEntry.titleFrames).toBe(60);
       expect(logEntry.overlayEnabled).toBe(true);
     });
   });

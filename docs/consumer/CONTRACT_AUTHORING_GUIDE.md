@@ -158,6 +158,7 @@ When Remotion is enabled in config (`remotion.enabled: true`), you can use **sch
 
 - Set **`intro.renderer`** and/or **`summary.renderer`** to `"remotion"`. Omit or set to `"png"` for the existing PNG-based behaviour.
 - In **post_production**, set **`useRemotionOverlays`** to `true` to use Remotion for step title cards and progress indicator (SceneTitleCard, ProgressOverlay). Omit or `false` for FFmpeg drawtext.
+- When **`useRemotionOverlays`** is **true**, the pipeline inserts **silent audio** (`title_card_pad.wav`) into **`narration_concat.wav`** before each step’s speech (after an optional **transition** beep) so spoken narration lines up with the silent title card on video. Consumer tools that analyze `narration_concat.wav` should treat it as **speech plus synthetic silence**, not raw TTS only.
 
 Example snippet (v1.6):
 
@@ -230,11 +231,11 @@ Mode B supports an optional **`music`** field for a background music track:
 - Music file must be WAV format and must exist at the resolved path — run fails if declared but missing.
 - LUFS of the source music must be in the -15 to -17 range (validated before mix).
 
-Scripts without `music` (schema v1.0 or v1.1) remain valid; no migration required. You can set a **default** background music file in `config/default.json` under `execution.defaultBackgroundMusicPath` (absolute path to a WAV file); when the script has no `music` field, that file is used if it exists. Omit the key or leave it empty for narration-only when no script music is set.
+Scripts without `music` (schema v1.0 or v1.1) remain valid; no migration required. You can set a **default** background music file in **`config/mode_b.json`** under `execution.defaultBackgroundMusicPath` (absolute path to a WAV file); when the script has no `music` field, that file is used if it exists (Mode B merge). Omit the key or leave it empty for narration-only when no script music is set. See [CONFIG_REFERENCE.md](./CONFIG_REFERENCE.md).
 
 ### Mode B drift rule
 
-Mode B does **not** use the 200 ms drift rule. The rule is: **narration duration ≤ video duration**. If narration is longer than the video, the run fails. If narration is shorter, any gap is filled by silence or by background music (script `music` or config **execution.defaultBackgroundMusicPath**) — no drift violation.
+Mode B does **not** use the 200 ms drift rule. The rule is: **narration duration ≤ video duration**. If narration is longer than the video, the run fails. If narration is shorter, any gap is filled by silence or by background music (script `music` or **`config/mode_b.json`** **execution.defaultBackgroundMusicPath**) — no drift violation.
 
 ---
 

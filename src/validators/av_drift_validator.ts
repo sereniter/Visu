@@ -1,6 +1,6 @@
 /**
  * AV drift validator (Sprint 4). Pure function: enforces narration ≤ video; optionally enforces max gap (200ms for Mode C).
- * Mode B (recorded): no gap cap — use options.maxDriftMs = null. Mode C / Mode A: maxDriftMs 200.
+ * Mode B (recorded): no gap cap — use options.maxDriftMs = null. Mode C: maxDriftMs 200. Mode A (`ui_flow_scenes`): per-row drift may be skipped in the timeline engine; post-concat check uses maxDriftMs null (narration ≤ stitched video only).
  * No correction logic; hard fail on violation.
  */
 

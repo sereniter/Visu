@@ -12,9 +12,9 @@ import { runFfmpeg } from "../ffmpeg_adapter.js";
 const PIPELINE_SAMPLE_RATE = 48000;
 
 export interface LocalPiperAdapterOptions {
-  /** Absolute path to Piper .onnx model. When omitted, uses config/default.json tts.modelPath. */
+  /** Absolute path to Piper .onnx model. When omitted, uses config/shared.json tts.modelPath. */
   modelPath?: string;
-  /** Absolute path to Piper .onnx.json config. When omitted, uses config/default.json tts.modelConfigPath. */
+  /** Absolute path to Piper .onnx.json config. When omitted, uses config/shared.json tts.modelConfigPath. */
   modelConfigPath?: string;
 }
 

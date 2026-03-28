@@ -71,6 +71,17 @@ The mix runs for the full video (music continues after narration ends). See Cont
 
 Other fields (e.g. `sourceVideoPath`, `narrationPath`, `crf`, `audioSampleRate`, `piperModelPath`, `piperModelHash`, `voiceId`) may be present for compatibility or auditing; the tables above cover what is needed for integration.
 
+### Mode A (`ui_flow_scenes`) — intermediate artifacts
+
+These files typically live under `artifacts/{runId}/` beside `final.mp4`:
+
+| File | When | Notes |
+|------|------|--------|
+| `stitched_video.mp4` | Always (timeline step) | Hard-cut concat of intro + scenes + summary clips. |
+| `{index}_{scene_id}_timeline_norm.mp4` | When a timeline segment had no audio stream | Muxed silent AAC for concat compatibility; final segment uses the probed `video_path` only. |
+| `title_card_pad.wav` | When `useRemotionOverlays` is on (resolved) | Silence matching the Remotion title-card length; prepended in `narration_concat.wav` before each step’s speech (with optional `transition.wav` before the pad). |
+| `narration_concat.wav` | Always | Full narration mix for AV merge; with Remotion overlays on, may include synthetic silence segments as above — do not assume speech-only. |
+
 ### Per-scene fields (inside `scenes[]`)
 
 | Field | Type | Description |
