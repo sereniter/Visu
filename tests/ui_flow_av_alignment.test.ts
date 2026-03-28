@@ -140,4 +140,24 @@ describe("normalizeTimelineSegmentVideoForConcat", () => {
     expect(runFfmpeg).toHaveBeenCalled();
     expect(remotionProbe.ffprobeRemotionOutput).toHaveBeenCalledWith("/ffprobe", "/segment/intro.mp4");
   });
+
+  it("skips ffprobe when preConcatFfprobe is provided", async () => {
+    const spy = vi.spyOn(remotionProbe, "ffprobeRemotionOutput");
+    const getVideoStreamInfo = vi.fn();
+    const adapter = {
+      getFfprobePath: () => "/ffprobe",
+      getFfmpegPath: () => "/ffmpeg",
+      getVideoStreamInfo,
+    };
+    const out = await normalizeTimelineSegmentVideoForConcat({
+      videoPath: "/scene/final.mp4",
+      outputPath: "/out/norm.mp4",
+      adapter: adapter as import("../src/adapters/ffmpeg_adapter.js").FFmpegAdapterInterface,
+      profile: testProfile,
+      preConcatFfprobe: { streams: [{ codec_type: "video" }, { codec_type: "audio" }] },
+    });
+    expect(out).toBe("/scene/final.mp4");
+    expect(spy).not.toHaveBeenCalled();
+    expect(getVideoStreamInfo).not.toHaveBeenCalled();
+  });
 });

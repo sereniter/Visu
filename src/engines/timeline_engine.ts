@@ -9,6 +9,7 @@ import type { FFmpegAdapterInterface, VideoStreamInfo } from "../adapters/ffmpeg
 import { fpsWithinTolerance, runFfmpeg } from "../adapters/ffmpeg_adapter.js";
 import { getWavDurationMs } from "../core/wav_utils.js";
 import { validateAvDrift } from "../validators/av_drift_validator.js";
+import type { RemotionProbeResult } from "../validators/remotion_output_validator.js";
 
 export interface TimelineSceneInput {
   video_path: string;
@@ -17,9 +18,13 @@ export interface TimelineSceneInput {
   scene_id?: string;
   /**
    * When true, skip **per-row** AV drift here (used by Mode A).
-   * Mode A still enforces narration ≤ stitched video **after** `narration_concat.wav` is built in `ui_flow_scene_engine` (post–WAV concat probe on `stitched_video.mp4`).
+   * Drift is still enforced post-concat in `ui_flow_scene_engine` (step 16) after `narration_concat.wav` and merge-video alignment.
    */
-  skip_drift?: boolean;
+  skip_per_segment_drift?: boolean;
+  /**
+   * When set, Mode A skips an extra ffprobe in `normalizeTimelineSegmentVideoForConcat` for this file (probe already done after scene final / overlay concat).
+   */
+  preConcatFfprobe?: RemotionProbeResult;
 }
 
 export interface TimelineSceneProbe {
@@ -100,7 +105,7 @@ export async function runTimeline(params: {
     const narrationDurationMs = getWavDurationMs(s.narration_path);
 
     let driftMs = 0;
-    if (s.skip_drift) {
+    if (s.skip_per_segment_drift) {
       logger?.log("scene_drift_skipped", {
         payload: {
           sceneId: s.scene_id ?? null,

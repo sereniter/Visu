@@ -26,6 +26,7 @@ import { runAudit } from "./cli/audit.js";
 import { runReplay } from "./cli/replay.js";
 import { runUpload } from "./cli/upload.js";
 import { runMigrateContract } from "./cli/migrate_contract.js";
+import { remergeUIFlowScenesFromArtifacts } from "./cli/remerge_ui_flow_scenes.js";
 import { runParseRecording } from "./cli/parse_recording.js";
 import { validateContentRoot, validateOutputRoot, validateTopicDir } from "./validators/config_validator.js";
 import { resolveContentPath, resolveOutputPath } from "./core/path_resolver.js";
@@ -72,6 +73,34 @@ async function main(): Promise<void> {
     const report = await runReplay(runId);
     console.log(JSON.stringify(report, null, 2));
     process.exit(report.audit.status === "PASS" ? 0 : report.artifactsExist ? 1 : 2);
+  }
+
+  if (cmd === "remerge-ui-flow-scenes") {
+    const runId = argv["run-id"] as string | undefined;
+    const contractPath = argv.contract as string | undefined;
+    const videoBasename = argv.video as string | undefined;
+    if (!runId || !contractPath) {
+      console.error(
+        "visu remerge-ui-flow-scenes requires --run-id <uuid> and --contract <path under contentRoot> [--video stitched_video.mp4]"
+      );
+      process.exit(2);
+    }
+    validateContentRoot();
+    validateOutputRoot();
+    setActiveConfigMode("a");
+    const logsDir = join(process.cwd(), "logs");
+    mkdirSync(logsDir, { recursive: true });
+    const logPath = join(logsDir, `visu-remerge-${runId}.log`);
+    const logger = createLogger(runId, logPath);
+    const result = await remergeUIFlowScenesFromArtifacts({
+      runId,
+      contractRelativePath: contractPath,
+      logger,
+      videoBasename,
+    });
+    console.log(result.message);
+    logger.close();
+    process.exit(result.exitCode);
   }
 
   if (cmd === "resume") {

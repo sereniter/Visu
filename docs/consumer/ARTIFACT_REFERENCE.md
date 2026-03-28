@@ -78,8 +78,10 @@ These files typically live under `artifacts/{runId}/` beside `final.mp4`:
 | File | When | Notes |
 |------|------|--------|
 | `stitched_video.mp4` | Always (timeline step) | Hard-cut concat of intro + scenes + summary clips. |
+| `stitched_merge_narr_align.mp4` | When `ffprobe` duration is shorter than `narration_concat.wav` (concat/timestamp quirk) | Video-only re-encode with **tpad** clone of the last frame so duration matches narration before `final.mp4`; does not drop speech. |
 | `{index}_{scene_id}_timeline_norm.mp4` | When a timeline segment had no audio stream | Muxed silent AAC for concat compatibility; final segment uses the probed `video_path` only. |
-| `title_card_pad.wav` | When `useRemotionOverlays` is on (resolved) | Silence matching the Remotion title-card length; prepended in `narration_concat.wav` before each step’s speech (with optional `transition.wav` before the pad). |
+| `title_card_pad.wav` | When `useRemotionOverlays` is on (resolved) | Silence so **`transition.wav` (if any) + this file** spans the on-screen title card; prepended before each step’s speech after the transition beep. |
+| `*_narr_body_padded.wav` | Overlays on (and intro/summary segments) | Per-segment TTS WAV padded with trailing silence so spoken + silence matches the **body** clip duration on the timeline (screen capture often runs longer than TTS alone). Feeds `narration_concat.wav`. |
 | `narration_concat.wav` | Always | Full narration mix for AV merge; with Remotion overlays on, may include synthetic silence segments as above — do not assume speech-only. |
 
 ### Per-scene fields (inside `scenes[]`)

@@ -80,7 +80,7 @@ export function buildTranscodeArgs(params: {
       // Mode B: loop/trim music to video duration; mix with duration=longest so music continues after narration
       args.push(
         "-filter_complex",
-        `[2:a]aloop=loop=-1:size=2e+09,atrim=duration=${sec},asetpts=PTS-STARTPTS[mt];[mt]volume=0.15[music_bg];[1:a]volume=1[a_narr];[a_narr][music_bg]amix=inputs=2:duration=longest[mixed_audio]`
+        `[2:a]aloop=loop=-1:size=2e+09,atrim=duration=${sec},asetpts=PTS-STARTPTS[mt];[mt]volume=0.28[music_bg];[1:a]volume=1[a_narr];[a_narr][music_bg]amix=inputs=2:duration=longest[mixed_audio]`
       );
     } else {
       const duckLinear = 10 ** (DUCKING_DB / 20);

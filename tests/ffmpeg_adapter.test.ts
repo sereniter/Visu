@@ -137,7 +137,7 @@ describe("buildTranscodeArgs", () => {
     expect(filter).toMatch(/aloop=loop=-1/);
     expect(filter).toMatch(/atrim=duration=65\.5/);
     expect(filter).toMatch(/duration=longest/);
-    expect(filter).toMatch(/volume=0\.15/);
+    expect(filter).toMatch(/volume=0\.28/);
   });
 
   it("when musicPath is null, uses direct narration map (no mixing filter)", () => {

@@ -15,6 +15,10 @@ export interface Config {
     viewport: { width: number; height: number };
     /** Optional default background music (WAV) for Mode B when script has no "music" field. Absolute path. */
     defaultBackgroundMusicPath?: string;
+    /** Mode A (ui_flow_scenes): refuse clone-tail extension when narration exceeds merge video by more than this (ms). */
+    maxNarrationVideoExcessMs?: number;
+    /** Mode A: extra tail after steps so raw capture ≥ narration + buffer_sec + this (ms). */
+    sceneRecordingTailBufferMs?: number;
   };
   browser: {
     headless: boolean;

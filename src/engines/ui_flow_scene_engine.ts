@@ -33,7 +33,6 @@ import { buildTranscodeArgs } from "../adapters/ffmpeg_adapter.js";
 import { startSoundsServer } from "../core/sounds_server.js";
 import {
   applyTitleCardAndProgress,
-  applyZoomToAction,
   addChapterMarkers,
   generateSrt,
   generateThumbnail,
@@ -43,9 +42,11 @@ import { RemotionAdapter } from "../adapters/remotion_adapter.js";
 import {
   ffprobeRemotionOutput,
   validateRemotionProbe,
+  type RemotionProbeResult,
 } from "../validators/remotion_output_validator.js";
 import { writeMediaMetadata } from "./metadata_writer.js";
 import { DefaultScreenCaptureAdapter } from "../adapters/screen_capture_adapter.js";
+import { resolveUIFlowScenesBackgroundMusicPath } from "../core/ui_flow_scenes_music.js";
 
 const SCRIPT_TEMPLATES_PATH = "scripts/script_templates.json";
 const SCENE_FPS = 30;
@@ -172,6 +173,72 @@ async function muxSilentStereoAudio(params: {
   ]);
 }
 
+/** Pad mono PCM WAV with silence at the end so duration ≥ minDurationMs (matches body video when TTS is shorter than capture). */
+async function padWavEndToMinDurationMs(params: {
+  inputPath: string;
+  outputPath: string;
+  minDurationMs: number;
+  ffmpegPath: string;
+}): Promise<void> {
+  const cur = getWavDurationMs(params.inputPath);
+  if (cur >= params.minDurationMs) {
+    await copyFile(params.inputPath, params.outputPath);
+    return;
+  }
+  const padSec = Math.max(0.001, (params.minDurationMs - cur) / 1000);
+  await runFfmpeg(params.ffmpegPath, [
+    "-y",
+    "-i",
+    params.inputPath,
+    "-af",
+    `apad=pad_dur=${padSec.toFixed(3)}`,
+    "-c:a",
+    "pcm_s16le",
+    params.outputPath,
+  ]);
+}
+
+/**
+ * Clone-pad the end of the stitched (or enhanced) video so its probed duration matches narration_concat.
+ * FFmpeg concat + AAC can report a shorter container duration than the sum of segments; narration is built
+ * from per-segment timing — this aligns merge input without trimming speech (same idea as holding the last frame).
+ */
+async function extendMergeVideoCloneTailForNarration(params: {
+  inputPath: string;
+  outputPath: string;
+  extendMs: number;
+  ffmpegPath: string;
+  profile: EncodingProfile;
+  fps: number;
+}): Promise<void> {
+  const sec = Math.max(0.001, params.extendMs / 1000).toFixed(3);
+  await runFfmpeg(params.ffmpegPath, [
+    "-y",
+    "-i",
+    params.inputPath,
+    "-vf",
+    `tpad=stop_mode=clone:stop_duration=${sec}`,
+    "-map",
+    "0:v:0",
+    "-c:v",
+    params.profile.video_codec,
+    "-preset",
+    params.profile.preset,
+    "-profile:v",
+    params.profile.profile,
+    "-pix_fmt",
+    params.profile.pix_fmt,
+    "-crf",
+    String(params.profile.crf),
+    "-r",
+    String(params.fps),
+    "-movflags",
+    "+faststart",
+    "-an",
+    params.outputPath,
+  ]);
+}
+
 async function generateTitleCardSilenceWav(params: {
   outputPath: string;
   ffmpegPath: string;
@@ -200,8 +267,12 @@ export async function normalizeTimelineSegmentVideoForConcat(params: {
   outputPath: string;
   adapter: FFmpegAdapterInterface;
   profile: EncodingProfile;
+  /** When set (e.g. Mode A scene final already probed), skip ffprobe — one invocation per segment instead of two. */
+  preConcatFfprobe?: RemotionProbeResult;
 }): Promise<string> {
-  const probe = await ffprobeRemotionOutput(params.adapter.getFfprobePath(), params.videoPath);
+  const probe =
+    params.preConcatFfprobe ??
+    (await ffprobeRemotionOutput(params.adapter.getFfprobePath(), params.videoPath));
   const hasAudio = probe.streams.some((s) => s.codec_type === "audio");
   if (hasAudio) return params.videoPath;
   const durationMs = (await params.adapter.getVideoStreamInfo(params.videoPath)).durationMs;
@@ -376,7 +447,12 @@ async function executeSceneRecording(params: {
   page: Page;
   screenCapture: DefaultScreenCaptureAdapter;
   soundsBaseUrl?: string | null;
-}): Promise<{ videoPath: string; narrationPath: string; clickTimestampsMs: number[] }> {
+}): Promise<{
+  videoPath: string;
+  narrationPath: string;
+  clickTimestampsMs: number[];
+  preConcatFfprobe: RemotionProbeResult;
+}> {
   const { contract, scene, outputDir, baseDir, runId, adapter, logger, page, screenCapture, soundsBaseUrl } =
     params;
   const templates = loadScriptTemplates(baseDir);
@@ -406,8 +482,10 @@ async function executeSceneRecording(params: {
     payload: { scene_id: scene.scene_id, narrationDurationMs: getWavDurationMs(ttsResponse.audioPath) },
   });
   const narrationDurationMs = getWavDurationMs(ttsResponse.audioPath);
-  const recordingDurationMs = narrationDurationMs + scene.buffer_sec * 1000;
   const config = getConfig();
+  const sceneRecordingTailBufferMs = config.execution.sceneRecordingTailBufferMs ?? 500;
+  const minCaptureDurationMs =
+    narrationDurationMs + scene.buffer_sec * 1000 + sceneRecordingTailBufferMs;
   const enhancements = contract.recording_enhancements;
 
   const baseUrl = contract.baseUrl.replace(/\/$/, "");
@@ -551,6 +629,7 @@ async function executeSceneRecording(params: {
       payload: { scene_id: scene.scene_id, output: sceneRawPath },
     });
     await screenCapture.start(sceneRawPath);
+    const captureStartedAt = Date.now();
 
     logger.log("ui_flow_scene_steps_start", { payload: { scene_id: scene.scene_id, stepCount: scene.steps.length } });
     for (let i = 0; i < scene.steps.length; i++) {
@@ -579,6 +658,19 @@ async function executeSceneRecording(params: {
       });
     }
 
+    const elapsedCaptureMs = Date.now() - captureStartedAt;
+    const remainingMinCaptureMs = minCaptureDurationMs - elapsedCaptureMs;
+    if (remainingMinCaptureMs > 0) {
+      logger.log("ui_flow_scene_capture_tail_buffer", {
+        payload: {
+          scene_id: scene.scene_id,
+          waitMs: remainingMinCaptureMs,
+          minCaptureDurationMs,
+          elapsedCaptureMs,
+        },
+      });
+      await page.waitForTimeout(remainingMinCaptureMs);
+    }
   } finally {
     try {
       await screenCapture.stop();
@@ -604,6 +696,7 @@ async function executeSceneRecording(params: {
 
   const sceneFinalPath = join(outputDir, `scene_${scene.scene_id}_final.mp4`);
   const profile = getEncodingProfile();
+  // scene_*_final.mp4 carries a single narration audio stream; raw capture may include a dead/unused mic track that is not mapped here.
   const transcodeArgs = buildTranscodeArgs({
     rawVideoPath: sceneMp4Path,
     narrationPath: sceneAudioPath,
@@ -612,15 +705,22 @@ async function executeSceneRecording(params: {
     profile,
   });
   await runFfmpeg(ffmpegPath, transcodeArgs);
+  const preConcatFfprobe = await ffprobeRemotionOutput(adapter.getFfprobePath(), sceneFinalPath);
 
   logger.log("ui_flow_scene_record_done", {
-    payload: { scene_id: scene.scene_id, narrationDurationMs, clickCount: clickTimestampsMs.length },
+    payload: {
+      scene_id: scene.scene_id,
+      narrationDurationMs,
+      minCaptureDurationMs,
+      clickCount: clickTimestampsMs.length,
+    },
   });
 
   return {
     videoPath: sceneFinalPath,
     narrationPath: ttsResponse.audioPath,
     clickTimestampsMs,
+    preConcatFfprobe,
   };
 }
 
@@ -763,10 +863,9 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
         video_path: introResult.videoPath,
         narration_path: introResult.narrationPath,
         scene_id: "intro",
-        skip_drift: true,
+        skip_per_segment_drift: true,
       },
     ];
-    const recordedClickTimestampsMs: number[][] = [];
 
     const soundsDir = join(process.cwd(), "assets", "sounds");
     const useSoundsServer =
@@ -819,9 +918,9 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
           screenCapture,
           soundsBaseUrl,
         });
-        recordedClickTimestampsMs.push(result.clickTimestampsMs);
 
         let sceneVideoForTimeline = result.videoPath;
+        let preConcatFfprobe: RemotionProbeResult = result.preConcatFfprobe;
 
         if (resolvedUseRemotionOverlays && remotionAdapter) {
           try {
@@ -922,6 +1021,10 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
             });
 
             sceneVideoForTimeline = finalSceneClipPath;
+            preConcatFfprobe = await ffprobeRemotionOutput(
+              adapter.getFfprobePath(),
+              finalSceneClipPath,
+            );
 
             logger.log("ui_flow_scene_overlay_pipeline", {
               payload: {
@@ -948,7 +1051,8 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
           video_path: sceneVideoForTimeline,
           narration_path: result.narrationPath,
           scene_id: scene.scene_id,
-          skip_drift: true,
+          skip_per_segment_drift: true,
+          preConcatFfprobe,
         });
       }
     } finally {
@@ -1005,7 +1109,7 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
       video_path: summaryResult.videoPath,
       narration_path: summaryResult.narrationPath,
       scene_id: "summary",
-      skip_drift: true,
+      skip_per_segment_drift: true,
     });
 
     const encodingProfile = getEncodingProfile();
@@ -1021,6 +1125,7 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
           outputPath: outNorm,
           adapter,
           profile: encodingProfile,
+          preConcatFfprobe: s.preConcatFfprobe,
         });
         out.push({ ...s, video_path });
       }
@@ -1061,33 +1166,16 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
       });
       rawVideoPath = enhancedPath;
     }
-    if (contract.recording_enhancements.zoomToAction && recordedClickTimestampsMs.some((a) => a.length > 0)) {
-      const segmentDurationsMs = timelineResult.sceneProbes.map((p) => p.videoDurationMs);
-      const globalClickTimesSec: number[] = [];
-      for (let i = 0; i < recordedClickTimestampsMs.length; i++) {
-        const segmentStartMs = segmentDurationsMs.slice(0, i + 1).reduce((s, d) => s + d, 0);
-        for (const clickMs of recordedClickTimestampsMs[i]!) {
-          globalClickTimesSec.push((segmentStartMs + clickMs) / 1000);
-        }
-      }
-      const zoomPath = join(outputDir, "stitched_zoomed.mp4");
-      await applyZoomToAction({
-        inputPath: rawVideoPath,
-        outputPath: zoomPath,
-        globalClickTimesSec,
-        zoomLevel: contract.recording_enhancements.zoomLevel,
-        zoomDurationSec: 0.5,
-        width: config.execution.viewport.width,
-        height: config.execution.viewport.height,
-        ffmpegPath: adapter.getFfmpegPath(),
-      });
-      rawVideoPath = zoomPath;
-    }
-
-    const narrationPaths = timelineScenes.map((s) => s.narration_path);
     const transitionPath = join(process.cwd(), "assets", "sounds", "transition.wav");
     const transitionFile =
       contract.post_production.transitionSound && existsSync(transitionPath) ? transitionPath : null;
+
+    const visualTitleMs = Math.round(getUiFlowTitleCardPadDurationSec() * 1000);
+    const transitionMs = transitionFile ? getWavDurationMs(transitionFile) : 0;
+    // Transition plays over the tail of the visual title card; pad duration is visual title minus transition so speech starts at title end (intentional, not drift).
+    const audioTitlePadSec = transitionFile
+      ? Math.max(0.05, getUiFlowTitleCardPadDurationSec() - transitionMs / 1000)
+      : getUiFlowTitleCardPadDurationSec();
 
     let titleCardPadPath: string | null = null;
     if (resolvedUseRemotionOverlays) {
@@ -1095,9 +1183,49 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
       await generateTitleCardSilenceWav({
         outputPath: titleCardPadPath,
         ffmpegPath: adapter.getFfmpegPath(),
-        durationSec: getUiFlowTitleCardPadDurationSec(),
+        durationSec: audioTitlePadSec,
         profile: encodingProfile,
       });
+    }
+
+    const sceneRecordingTailBufferMs = config.execution.sceneRecordingTailBufferMs ?? 500;
+    const narrationPaths: string[] = [];
+    for (let ti = 0; ti < timelineScenes.length; ti++) {
+      const s = timelineScenes[ti]!;
+      const probe = timelineResult.sceneProbes[ti]!;
+      const isIntro = ti === 0;
+      const isSummary = ti === timelineScenes.length - 1;
+      let targetBodyMs = probe.videoDurationMs;
+      if (resolvedUseRemotionOverlays && !isIntro && !isSummary) {
+        targetBodyMs = Math.max(0, probe.videoDurationMs - visualTitleMs);
+        const bufferSec = contract.scenes[ti - 1]!.buffer_sec;
+        const expectedBodyMs =
+          probe.narrationDurationMs + bufferSec * 1000 + sceneRecordingTailBufferMs;
+        const driftBodyMs = Math.abs(targetBodyMs - expectedBodyMs);
+        if (driftBodyMs > 50) {
+          logger.log("ui_flow_scenes_body_pad_drift", {
+            payload: {
+              sceneIndex: ti,
+              scene_id: s.scene_id ?? null,
+              targetBodyMs,
+              expectedBodyMs,
+              driftMs: driftBodyMs,
+              narrationDurationMs: probe.narrationDurationMs,
+              bufferSec,
+              sceneRecordingTailBufferMs,
+            },
+          });
+        }
+      }
+      const safeId = (s.scene_id ?? `seg_${ti}`).replace(/[^a-zA-Z0-9_-]/g, "_");
+      const paddedPath = join(outputDir, `${ti}_${safeId}_narr_body_padded.wav`);
+      await padWavEndToMinDurationMs({
+        inputPath: s.narration_path,
+        outputPath: paddedPath,
+        minDurationMs: targetBodyMs,
+        ffmpegPath: adapter.getFfmpegPath(),
+      });
+      narrationPaths.push(paddedPath);
     }
 
     const wavPaths = buildUiFlowNarrationWavPaths({
@@ -1113,15 +1241,65 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
       ffmpegPath: adapter.getFfmpegPath(),
     });
 
-    const stitchedProbeMs = (await adapter.getVideoStreamInfo(timelineResult.stitchedVideoPath)).durationMs;
+    let mergeVideoPath = rawVideoPath;
+    let mergeVideoMs = (await adapter.getVideoStreamInfo(mergeVideoPath)).durationMs;
     const narrationConcatMs = getWavDurationMs(narrationConcatPath);
-    const driftGate = validateAvDrift(stitchedProbeMs, narrationConcatMs, { maxDriftMs: null });
+    const summedSegmentMs = timelineResult.totalDurationMs;
+    if (Math.abs(summedSegmentMs - mergeVideoMs) > 150) {
+      logger.log("ui_flow_scenes_segment_sum_vs_merge_probe", {
+        payload: { summedSegmentMs, mergeVideoProbeMs: mergeVideoMs },
+      });
+    }
+
+    const maxNarrationVideoExcessMs = config.execution.maxNarrationVideoExcessMs ?? 10_000;
+    if (narrationConcatMs > mergeVideoMs) {
+      const excessMs = narrationConcatMs - mergeVideoMs;
+      if (excessMs > maxNarrationVideoExcessMs) {
+        logger.log("ui_flow_scenes_video_extend_refused", {
+          payload: {
+            narrationConcatMs,
+            mergeVideoMs,
+            excessMs,
+            maxNarrationVideoExcessMs,
+            note: "clone-tail extension not attempted — excess above configured cap",
+          },
+        });
+        throw new Error(
+          `UI_FLOW_SCENES_AV_DRIFT: narration (${narrationConcatMs}ms) exceeds merge video (${mergeVideoMs}ms) by ${excessMs}ms (>${maxNarrationVideoExcessMs}ms)`,
+        );
+      }
+      const mergeVideoMsBeforeExtend = mergeVideoMs;
+      // Add 200ms margin over the raw excess so tpad frame-boundary rounding always lands above narration, not below.
+      const extendMs = excessMs + 200;
+      const alignPath = join(outputDir, "stitched_merge_narr_align.mp4");
+      await extendMergeVideoCloneTailForNarration({
+        inputPath: mergeVideoPath,
+        outputPath: alignPath,
+        extendMs,
+        ffmpegPath: adapter.getFfmpegPath(),
+        profile: encodingProfile,
+        fps: SCENE_FPS,
+      });
+      mergeVideoPath = alignPath;
+      mergeVideoMs = (await adapter.getVideoStreamInfo(mergeVideoPath)).durationMs;
+      logger.log("ui_flow_scenes_video_extended", {
+        payload: {
+          videoMsBefore: mergeVideoMsBeforeExtend,
+          videoMsAfter: mergeVideoMs,
+          rawExcessMs: excessMs,
+          extendedMs: extendMs,
+          narrationConcatMs,
+        },
+      });
+    }
+
+    const driftGate = validateAvDrift(mergeVideoMs, narrationConcatMs, { maxDriftMs: null });
     if (!driftGate.valid) {
       if (process.env.VISU_UI_FLOW_SCENES_DRIFT_SOFT === "1") {
         logger.log("ui_flow_scenes_drift_soft", {
           payload: {
             error: driftGate.error,
-            videoDurationMs: stitchedProbeMs,
+            videoDurationMs: mergeVideoMs,
             narrationDurationMs: narrationConcatMs,
           },
         });
@@ -1134,10 +1312,14 @@ export async function runUIFlowSceneEngine(params: UIFlowSceneEngineParams): Pro
     const primaryVoiceConfig = firstScene
       ? getVoiceConfig(firstScene.narration.language, firstScene.narration.voice_gender, process.cwd())
       : getVoiceConfig(contract.intro.narration.language, contract.intro.narration.voice_gender, process.cwd());
-    const bgMusicPath = config.execution.defaultBackgroundMusicPath ?? null;
+    const bgMusicPath = resolveUIFlowScenesBackgroundMusicPath(
+      contract,
+      baseDir,
+      config.execution.defaultBackgroundMusicPath
+    );
 
     const avMergeContext = await runAvMerge({
-      rawVideoPath,
+      rawVideoPath: mergeVideoPath,
       narrationPath: narrationConcatPath,
       musicPath: bgMusicPath,
       outputDir,
